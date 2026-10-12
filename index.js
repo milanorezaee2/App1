@@ -213,16 +213,16 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
           /* In keep-desktop, we keep desktop layout (no Dimensions patch) and scale via zoom */
         }
         html.arena-keep-desktop:not(.arena-frame-disabled) #root > div {
-          /* Scale the SafeAreaProvider content to fit 390 while keeping desktop structure */
-          zoom: 0.58 !important;
-          width: 672px !important; /* 390 / 0.58 ≈ 672 */
-          max-width: 672px !important;
+          /* Scale exactly to fit 390 like screenshot - preserve original structure without reflow */
+          zoom: 0.348 !important;
+          width: 1120px !important;
+          max-width: 1120px !important;
           transform-origin: top center !important;
         }
         /* Ensure the page content inside still respects scaled width */
         html.arena-keep-desktop:not(.arena-frame-disabled) #root div[style*="max-width: 1120"],
         html.arena-keep-desktop:not(.arena-frame-disabled) #root div[style*="max-width:1120"] {
-          max-width: 672px !important;
+          max-width: 1120px !important;
         }
         #arena-keep-desktop-toggle {
           position: fixed;
@@ -261,7 +261,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     // Toggle buttons logic (persisted) - frame on/off and keep-desktop vs mobile-optimized
     try {
       const KEY_KEEP = 'arena-keep-desktop';
-      const keepDesktop = (() => { try { return localStorage.getItem(KEY_KEEP) === '1'; } catch { return false; } })();
+      const keepDesktop = (() => { try { const v=localStorage.getItem(KEY_KEEP); return v===null || v==='1'; } catch { return true; } })();
       if (keepDesktop) document.documentElement.classList.add('arena-keep-desktop');
       // Second toggle for keep-desktop
       const onReadyKeep = () => {

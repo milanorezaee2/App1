@@ -29,7 +29,7 @@ try {
     var FRAME_W=390, FRAME_H=844, BP=520;
     var html=document.documentElement;
     try { if(localStorage.getItem('arena-mobile-frame-disabled')==='1') html.classList.add('arena-frame-disabled'); } catch(e){}
-    try { if(localStorage.getItem('arena-keep-desktop')==='1') html.classList.add('arena-keep-desktop'); } catch(e){}
+    try { var _k=null; try{_k=localStorage.getItem('arena-keep-desktop');}catch(e){} if(_k===null || _k==='1') html.classList.add('arena-keep-desktop'); } catch(e){}
     var winProto=Object.getPrototypeOf(window);
     var origWDesc=Object.getOwnPropertyDescriptor(winProto,'innerWidth');
     var origHDesc=Object.getOwnPropertyDescriptor(winProto,'innerHeight');
@@ -273,9 +273,9 @@ try {
   /* Keep-desktop mode: preserve original desktop layout scaled to fit 390 */
   @media (min-width: 520px) {
     html.arena-keep-desktop:not(.arena-frame-disabled) #root > div {
-      zoom: 0.58 !important;
-      width: 672px !important;
-      max-width: 672px !important;
+      zoom: 0.348 !important;
+      width: 1120px !important;
+      max-width: 1120px !important;
       transform-origin: top center !important;
     }
     #arena-keep-desktop-toggle {
@@ -326,7 +326,8 @@ try {
       var isDisabled = localStorage.getItem(KEY) === '1';
       if (isDisabled) document.documentElement.classList.add('arena-frame-disabled');
       var KEY2 = 'arena-keep-desktop';
-      var keepDesktop = localStorage.getItem(KEY2) === '1';
+      var _k2=null; try{ _k2=localStorage.getItem(KEY2); }catch(e){}
+      var keepDesktop = _k2===null || _k2==='1';
       if (keepDesktop) document.documentElement.classList.add('arena-keep-desktop');
       document.addEventListener('DOMContentLoaded', function() {
         var btn = document.createElement('button');
