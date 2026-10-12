@@ -194,6 +194,134 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
       else onReady();
     } catch {}
+
+    // --- Patch window.innerWidth/innerHeight + visualViewport + clientWidth so React Native's useWindowDimensions sees mobile size ---
+    // On desktop (>=520px) with frame enabled, report 390x844 instead of real window size.
+    // This makes all `width < 760` / `width < 640` checks render the mobile (compact) layout inside the 390 frame.
+    // react-native-web Dimensions uses visualViewport if available else documentElement.clientWidth, so we patch all.
+    try {
+      const FRAME_W = 390;
+      const FRAME_H = 844;
+      const BP = 520;
+      const winProto = Object.getPrototypeOf(window);
+      const origWDesc = Object.getOwnPropertyDescriptor(winProto, 'innerWidth');
+      const origHDesc = Object.getOwnPropertyDescriptor(winProto, 'innerHeight');
+      const origWGet = origWDesc && origWDesc.get;
+      const origHGet = origHDesc && origHDesc.get;
+      const getRealW = () => {
+        try { return origWGet ? origWGet.call(window) : window.outerWidth; } catch { return 1200; }
+      };
+      const getRealH = () => {
+        try { return origHGet ? origHGet.call(window) : window.outerHeight; } catch { return 800; }
+      };
+      Object.defineProperty(window, 'innerWidth', {
+        get() {
+          const real = getRealW();
+          const disabled = document.documentElement.classList.contains('arena-frame-disabled');
+          if (!disabled && real >= BP) return FRAME_W;
+          return real;
+        },
+        configurable: true,
+      });
+      Object.defineProperty(window, 'innerHeight', {
+        get() {
+          const real = getRealH();
+          const disabled = document.documentElement.classList.contains('arena-frame-disabled');
+          if (!disabled && real >= BP) return FRAME_H;
+          return real;
+        },
+        configurable: true,
+      });
+      // Patch documentElement.clientWidth/Height (fallback when visualViewport is disabled)
+      try {
+        const elProto = Element.prototype;
+        const origCWDesc = Object.getOwnPropertyDescriptor(elProto, 'clientWidth');
+        const origCHDesc = Object.getOwnPropertyDescriptor(elProto, 'clientHeight');
+        const origCWGet = origCWDesc && origCWDesc.get;
+        const origCHGet = origCHDesc && origCHDesc.get;
+        if (origCWGet) {
+          Object.defineProperty(elProto, 'clientWidth', {
+            get() {
+              if (this === document.documentElement) {
+                const real = origCWGet.call(this);
+                const disabled = document.documentElement.classList.contains('arena-frame-disabled');
+                const realWinW = getRealW();
+                if (!disabled && realWinW >= BP) return FRAME_W;
+                return real;
+              }
+              return origCWGet.call(this);
+            },
+            configurable: true,
+          });
+        }
+        if (origCHGet) {
+          Object.defineProperty(elProto, 'clientHeight', {
+            get() {
+              if (this === document.documentElement) {
+                const real = origCHGet.call(this);
+                const disabled = document.documentElement.classList.contains('arena-frame-disabled');
+                const realWinW = getRealW();
+                if (!disabled && realWinW >= BP) return FRAME_H;
+                return real;
+              }
+              return origCHGet.call(this);
+            },
+            configurable: true,
+          });
+        }
+      } catch {}
+      // Patch visualViewport to return null when frame enabled (forces Dimensions to use clientWidth fallback which we patched)
+      try {
+        let realVP = window.visualViewport;
+        const vpDesc = Object.getOwnPropertyDescriptor(window, 'visualViewport') || Object.getOwnPropertyDescriptor(winProto, 'visualViewport');
+        const vpGet = vpDesc && vpDesc.get;
+        if (vpGet) {
+          Object.defineProperty(window, 'visualViewport', {
+            get() {
+              const disabled = document.documentElement.classList.contains('arena-frame-disabled');
+              const realWinW = getRealW();
+              if (!disabled && realWinW >= BP) return null;
+              return vpGet.call(window);
+            },
+            configurable: true,
+          });
+        } else if (realVP !== undefined) {
+          Object.defineProperty(window, 'visualViewport', {
+            get() {
+              const disabled = document.documentElement.classList.contains('arena-frame-disabled');
+              const realWinW = getRealW();
+              if (!disabled && realWinW >= BP) return null;
+              return realVP;
+            },
+            set(v) { realVP = v; },
+            configurable: true,
+          });
+        }
+      } catch {}
+      // Ensure Dimensions listeners are notified when frame toggles
+      const dispatchResize = () => { try { window.dispatchEvent(new Event('resize')); } catch {} };
+      const origToggle = DOMTokenList.prototype.toggle;
+      DOMTokenList.prototype.toggle = function (token, force) {
+        const res = origToggle.call(this, token, force);
+        if (token === 'arena-frame-disabled') setTimeout(dispatchResize, 0);
+        return res;
+      };
+      const origAdd = DOMTokenList.prototype.add;
+      DOMTokenList.prototype.add = function (...args) {
+        const res = origAdd.apply(this, args);
+        if (args.includes('arena-frame-disabled')) setTimeout(dispatchResize, 0);
+        return res;
+      };
+      const origRemove = DOMTokenList.prototype.remove;
+      DOMTokenList.prototype.remove = function (...args) {
+        const res = origRemove.apply(this, args);
+        if (args.includes('arena-frame-disabled')) setTimeout(dispatchResize, 0);
+        return res;
+      };
+      setTimeout(dispatchResize, 50);
+      // Also dispatch on window resize to re-evaluate
+      window.addEventListener('resize', () => setTimeout(dispatchResize, 0));
+    } catch {}
   } catch (e) {
     // ignore
   }

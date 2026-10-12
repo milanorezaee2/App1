@@ -31,7 +31,106 @@ function contentType(p) {
 // - On desktop (>=520px) shows 390x844 phone frame centered with notch & shadow
 // - On real mobile (<520px) full-screen without frame
 // Includes toggle button to switch frame on/off
+// Also patches window.innerWidth/innerHeight so useWindowDimensions sees mobile size (390)
 const MOBILE_FRAME_INJECTION = `
+<script id="arena-dimensions-patch">
+// Early patch: make React Native's useWindowDimensions report 390x844 on desktop when frame is enabled
+// react-native-web Dimensions uses visualViewport if available else documentElement.clientWidth, so patch all.
+try {
+  (function(){
+    var FRAME_W=390, FRAME_H=844, BP=520;
+    var html=document.documentElement;
+    try { if(localStorage.getItem('arena-mobile-frame-disabled')==='1') html.classList.add('arena-frame-disabled'); } catch(e){}
+    var winProto=Object.getPrototypeOf(window);
+    var origWDesc=Object.getOwnPropertyDescriptor(winProto,'innerWidth');
+    var origHDesc=Object.getOwnPropertyDescriptor(winProto,'innerHeight');
+    var origWGet=origWDesc&&origWDesc.get;
+    var origHGet=origHDesc&&origHDesc.get;
+    var getRealW=function(){ try{ return origWGet?origWGet.call(window):window.outerWidth; }catch{ return 1200;} };
+    var getRealH=function(){ try{ return origHGet?origHGet.call(window):window.outerHeight; }catch{ return 800;} };
+    try {
+      Object.defineProperty(window,'innerWidth',{
+        get:function(){ var real=getRealW(); if(!html.classList.contains('arena-frame-disabled') && real>=BP) return FRAME_W; return real; },
+        configurable:true
+      });
+      Object.defineProperty(window,'innerHeight',{
+        get:function(){ var real=getRealH(); if(!html.classList.contains('arena-frame-disabled') && real>=BP) return FRAME_H; return real; },
+        configurable:true
+      });
+    } catch(e){}
+    // Patch documentElement.clientWidth/Height
+    try {
+      var elProto=Element.prototype;
+      var origCWDesc=Object.getOwnPropertyDescriptor(elProto,'clientWidth');
+      var origCHDesc=Object.getOwnPropertyDescriptor(elProto,'clientHeight');
+      var origCWGet=origCWDesc&&origCWDesc.get;
+      var origCHGet=origCHDesc&&origCHDesc.get;
+      if(origCWGet){
+        Object.defineProperty(elProto,'clientWidth',{
+          get:function(){
+            if(this===document.documentElement){
+              var real=origCWGet.call(this);
+              var realWinW=getRealW();
+              if(!html.classList.contains('arena-frame-disabled') && realWinW>=BP) return FRAME_W;
+              return real;
+            }
+            return origCWGet.call(this);
+          },
+          configurable:true
+        });
+      }
+      if(origCHGet){
+        Object.defineProperty(elProto,'clientHeight',{
+          get:function(){
+            if(this===document.documentElement){
+              var real=origCHGet.call(this);
+              var realWinW=getRealW();
+              if(!html.classList.contains('arena-frame-disabled') && realWinW>=BP) return FRAME_H;
+              return real;
+            }
+            return origCHGet.call(this);
+          },
+          configurable:true
+        });
+      }
+    } catch(e){}
+    // Patch visualViewport to return null when frame enabled (forces Dimensions to use clientWidth fallback)
+    try {
+      var realVP=window.visualViewport;
+      var vpDesc=Object.getOwnPropertyDescriptor(window,'visualViewport')||Object.getOwnPropertyDescriptor(winProto,'visualViewport');
+      var vpGet=vpDesc&&vpDesc.get;
+      if(vpGet){
+        Object.defineProperty(window,'visualViewport',{
+          get:function(){
+            if(!html.classList.contains('arena-frame-disabled') && getRealW()>=BP) return null;
+            return vpGet.call(window);
+          },
+          configurable:true
+        });
+      } else if(realVP!==undefined){
+        Object.defineProperty(window,'visualViewport',{
+          get:function(){
+            if(!html.classList.contains('arena-frame-disabled') && getRealW()>=BP) return null;
+            return realVP;
+          },
+          set:function(v){ realVP=v; },
+          configurable:true
+        });
+      }
+    } catch(e){}
+    try {
+      var dispatchResize=function(){ try{ window.dispatchEvent(new Event('resize')); }catch(e){} };
+      var p=DOMTokenList.prototype;
+      var oToggle=p.toggle, oAdd=p.add, oRemove=p.remove;
+      p.toggle=function(token,force){ var r=oToggle.call(this,token,force); if(token==='arena-frame-disabled') setTimeout(dispatchResize,0); return r; };
+      p.add=function(){ var r=oAdd.apply(this,arguments); if([].slice.call(arguments).indexOf('arena-frame-disabled')!==-1) setTimeout(dispatchResize,0); return r; };
+      p.remove=function(){ var r=oRemove.apply(this,arguments); if([].slice.call(arguments).indexOf('arena-frame-disabled')!==-1) setTimeout(dispatchResize,0); return r; };
+      // Also trigger on resize
+      setTimeout(dispatchResize,50);
+    } catch(e){}
+  })();
+} catch(e){}
+</script>
 <style id="arena-mobile-frame">
   /* --- Mobile resolution emulation for Arena web preview --- */
   @media (min-width: 520px) {
