@@ -87,7 +87,10 @@ failed_step="dumping the Android UI hierarchy"
 capture_ui
 
 for attempt in 1 2; do
-  if ! grep -Fq "System UI isn't responding" "$ui_file"; then
+  # GitHub's emulator can occasionally show an ANR dialog for Android Settings
+  # itself while the app is foregrounded; give only system-owned dialogs a chance
+  # to recover, while still failing if MiloMultiApp is the unresponsive process.
+  if ! grep -Eiq "(System UI|Settings) isn't responding" "$ui_file"; then
     break
   fi
 
@@ -111,10 +114,10 @@ PY
     break
   fi
   read -r wait_x wait_y <<< "$wait_coords"
-  echo "System UI reported an ANR; selecting Wait at $wait_x,$wait_y and allowing the app another 30 seconds."
+  echo "Android system service reported an ANR; selecting Wait at $wait_x,$wait_y and allowing the app another 30 seconds."
   adb shell input tap "$wait_x" "$wait_y"
   sleep 30
-  failed_step="rechecking the screen after waiting for Android System UI"
+  failed_step="rechecking the screen after waiting for the Android system service"
   capture_ui
 done
 
