@@ -26,7 +26,7 @@ const MOBILE_FRAME_INJECTION = `
 <script id="arena-dimensions-patch">
 try {
   (function(){
-    var FRAME_W=390, FRAME_H=844, BP=520;
+    var FRAME_W=360, FRAME_H=800, BP=520;
     var html=document.documentElement;
     try { if(localStorage.getItem('arena-mobile-frame-disabled')==='1') html.classList.add('arena-frame-disabled'); } catch(e){}
     try { var _k=null; try{_k=localStorage.getItem('arena-keep-desktop');}catch(e){} if(_k===null || _k==='1') html.classList.add('arena-keep-desktop'); } catch(e){}
@@ -138,11 +138,11 @@ try {
     }
     html:not(.arena-frame-disabled) #root,
     body:not(.arena-frame-disabled) #root {
-      width: 390px !important;
-      height: 844px !important;
-      max-width: 390px !important;
-      max-height: 844px !important;
-      min-height: 844px !important;
+      width: 360px !important;
+      height: 800px !important;
+      max-width: 360px !important;
+      max-height: 800px !important;
+      min-height: 800px !important;
       flex: none !important;
       border-radius: 48px !important;
       overflow: hidden !important;
@@ -182,7 +182,7 @@ try {
       pointer-events: none;
     }
     html:not(.arena-frame-disabled) body::after {
-      content: 'پیش‌نمایش موبایل • 390 × 844';
+      content: 'پیش‌نمایش موبایل • 360 × 800 · xhdpi 720×1600';
       position: fixed;
       bottom: 12px;
       left: 50%;
@@ -270,10 +270,10 @@ try {
   html.arena-frame-disabled #root::before,
   html.arena-frame-disabled #root::after,
   html.arena-frame-disabled body::after { display: none !important; }
-  /* Keep-desktop mode: preserve original desktop layout scaled to fit 390 */
+  /* Keep-desktop mode: preserve original desktop layout scaled to fit 360 */
   @media (min-width: 520px) {
     html.arena-keep-desktop:not(.arena-frame-disabled) #root > div {
-      zoom: 0.348 !important;
+      zoom: 0.3214 !important;
       width: 1120px !important;
       max-width: 1120px !important;
       transform-origin: top center !important;
@@ -448,5 +448,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`Preview server running at http://0.0.0.0:${port} serving ${dist} with baseUrl ${baseUrl} (also /) + mobile frame 390x844 polished`);
+  console.log(`Preview server running at http://0.0.0.0:${port} serving ${dist} with baseUrl ${baseUrl} (also /) + mobile frame 360×800 dp (xhdpi 720×1600 px) polished`);
 });

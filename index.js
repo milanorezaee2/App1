@@ -36,8 +36,10 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   }
 }
 
-// Mobile resolution emulation for web preview (390x844 iPhone frame on desktop)
-// - Desktop (>=520px): centered phone frame with notch & shadow, light background like international apps
+// Mobile resolution emulation for web preview (360×800 dp → xhdpi 720×1600 px / Android)
+// Density buckets (same dp, different px):
+//   mdpi  1× → 360×800 | hdpi 1.5× → 540×1200 | xhdpi 2× → 720×1600 ← this phone | xxhdpi 3× → 1080×2400 | xxxhdpi 4× → 1440×3200
+// - Desktop (>=520px): centered phone frame 360×800 dp with notch & shadow, light background like international apps
 // - Real mobile (<520px): full-screen without frame to keep native UX
 // - Adds toggle button to switch frame on/off (persisted in localStorage)
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -61,11 +63,11 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
         }
         html:not(.arena-frame-disabled) #root,
         body:not(.arena-frame-disabled) #root {
-          width: 390px !important;
-          height: 844px !important;
-          max-width: 390px !important;
-          max-height: 844px !important;
-          min-height: 844px !important;
+          width: 360px !important;
+          height: 800px !important;
+          max-width: 360px !important;
+          max-height: 800px !important;
+          min-height: 800px !important;
           flex: none !important;
           border-radius: 48px !important;
           overflow: hidden !important;
@@ -112,7 +114,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
         }
         /* Subtle label below frame */
         html:not(.arena-frame-disabled) body::after {
-          content: 'پیش‌نمایش موبایل • 390 × 844';
+          content: 'پیش‌نمایش موبایل • 360 × 800 · xhdpi 720×1600';
           position: fixed;
           bottom: 12px;
           left: 50%;
@@ -207,14 +209,14 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
           overflow: hidden !important;
         }
       }
-      /* Keep-desktop mode: preserve original desktop layout scaled to fit 390, like "without change" */
+      /* Keep-desktop mode: preserve original desktop layout scaled to fit 360, like "without change" */
       @media (min-width: 520px) {
         html.arena-keep-desktop:not(.arena-frame-disabled) #root {
           /* In keep-desktop, we keep desktop layout (no Dimensions patch) and scale via zoom */
         }
         html.arena-keep-desktop:not(.arena-frame-disabled) #root > div {
-          /* Scale exactly to fit 390 like screenshot - preserve original structure without reflow */
-          zoom: 0.348 !important;
+          /* Scale exactly to fit 360 like xhdpi - preserve original structure without reflow */
+          zoom: 0.3214 !important;
           width: 1120px !important;
           max-width: 1120px !important;
           transform-origin: top center !important;
@@ -320,12 +322,12 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     } catch {}
 
     // --- Patch window.innerWidth/innerHeight + visualViewport + clientWidth so React Native's useWindowDimensions sees mobile size ---
-    // On desktop (>=520px) with frame enabled, report 390x844 instead of real window size.
-    // This makes all `width < 760` / `width < 640` checks render the mobile (compact) layout inside the 390 frame.
+    // On desktop (>=520px) with frame enabled, report 360×800 instead of real window size.
+    // This makes all `width < 760` / `width < 640` checks render the mobile (compact) layout inside the 360 frame.
     // react-native-web Dimensions uses visualViewport if available else documentElement.clientWidth, so we patch all.
     try {
-      const FRAME_W = 390;
-      const FRAME_H = 844;
+      const FRAME_W = 360;
+      const FRAME_H = 800;
       const BP = 520;
       const winProto = Object.getPrototypeOf(window);
       const origWDesc = Object.getOwnPropertyDescriptor(winProto, 'innerWidth');
