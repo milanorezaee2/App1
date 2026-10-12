@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Award, BarChart3, BookOpen, ChevronDown, ChevronLeft, Clock, Cloud, Globe2, Headphones, Layers3, Mic, RefreshCw, ShieldCheck, Sparkles, Star, TrendingUp } from 'lucide-react-native';
@@ -123,15 +123,21 @@ export default function LanguagesHome() {
   const [details, setDetails] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
+  const [contentH, setContentH] = useState(0);
 
   useEffect(() => setHydrated(true), []);
-  const compact = !hydrated || width < 760;
-  const tiny = !hydrated || width < 380;
+  // کاربر می‌خواهد گوشی دقیقاً مثل عکس اول وب (حفظ چیدمان اصلی اسکیل‌شده) باشد
+  // روی گوشی واقعی 360dp، حالت بهینه ستونی بود و محتوا کامل عوض می‌شد — اینجا فیکس می‌کنیم
+  const FORCE_DESKTOP_SCALED_ON_NATIVE = true;
+  const compact = FORCE_DESKTOP_SCALED_ON_NATIVE && Platform.OS !== 'web' ? false : (!hydrated || width < 760);
+  const tiny = FORCE_DESKTOP_SCALED_ON_NATIVE && Platform.OS !== 'web' ? false : (!hydrated || width < 380);
+  const scale = FORCE_DESKTOP_SCALED_ON_NATIVE && Platform.OS !== 'web' && width < 1120 && width > 0 ? width / 1120 : 1;
+  const contentScaleStyle = scale !== 1 ? ({ width: 1120, transform: [{ scale }] as any, transformOrigin: 'top center' as any, alignSelf: 'center' as any, marginBottom: contentH ? -contentH * (1 - scale) : 0 } as any) : null;
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={[styles.page, compact && styles.pageCompact]} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
+      <ScrollView contentContainerStyle={[styles.page, compact && styles.pageCompact, scale !== 1 && { alignItems: 'center' }]} showsVerticalScrollIndicator={false}>
+        <View style={[styles.content, contentScaleStyle]} onLayout={e => { if (scale !== 1) setContentH(e.nativeEvent.layout.height); }}>
           <View style={[styles.header, tiny && styles.headerTiny]}>
             <View style={styles.brandRow}>
               <LinearGradient colors={['#9B78F0', '#5E42C5']} style={styles.logo}>
