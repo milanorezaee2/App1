@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/AppText';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -59,14 +59,14 @@ const accents = {
   },
 } as const;
 
-function FantasyPortal({ compact, tiny }: { compact: boolean; tiny: boolean }) {
+function FantasyPortal({ compact, tiny, stacked }: { compact: boolean; tiny: boolean; stacked: boolean }) {
   return (
-    <View style={[styles.artStage, compact && styles.artStageCompact, tiny && styles.artStageTiny]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={[styles.artOrbit, compact && styles.artOrbitCompact, tiny && styles.artOrbitTiny]} />
+    <View style={[styles.artStage, compact && styles.artStageCompact, stacked && styles.artStageStacked, tiny && !stacked && styles.artStageTiny]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={[styles.artOrbit, compact && styles.artOrbitCompact, stacked && styles.artOrbitStacked, tiny && !stacked && styles.artOrbitTiny]} />
       <Image
         source={require('../assets/language-learning-hero.jpg')}
         resizeMode="cover"
-        style={[styles.artImage, compact && styles.artImageCompact, tiny && styles.artImageTiny]}
+        style={[styles.artImage, compact && styles.artImageCompact, stacked && styles.artImageStacked, tiny && !stacked && styles.artImageTiny]}
       />
       <View style={styles.artStarTop}><Star size={15} color="#FFE7A7" fill="#FFE7A7" /></View>
       <View style={styles.artStarSide}><Sparkles size={20} color="#C6F4E5" /></View>
@@ -83,27 +83,30 @@ export default function LanguagesHome() {
   const [focused, setFocused] = useState<string | null>(null);
 
   useEffect(() => setHydrated(true), []);
-  const compact = !hydrated || width < 760;
-  const tiny = !hydrated || width < 380;
+  const waitingForWebLayout = Platform.OS === 'web' && !hydrated;
+  const compact = waitingForWebLayout || width < 760;
+  const tiny = waitingForWebLayout || width < 340;
+  const stackHero = waitingForWebLayout || width < 350;
+  const singleColumnCards = waitingForWebLayout || width < 340;
 
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={[styles.page, compact && styles.pageCompact]} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <View style={[styles.header, tiny && styles.headerTiny]}>
+          <View style={[styles.header, compact && styles.headerCompact, tiny && styles.headerTiny]}>
             <View style={styles.brandRow}>
-              <LinearGradient colors={['#9B78F0', '#5E42C5']} style={styles.logo}>
+              <LinearGradient colors={['#9B78F0', '#5E42C5']} style={[styles.logo, compact && styles.logoCompact]}>
                 <Globe2 size={24} color="#FFFFFF" strokeWidth={1.8} />
                 <View style={styles.logoSpark}><Sparkles size={10} color="#FFEBA9" fill="#FFEBA9" /></View>
               </LinearGradient>
               <View style={styles.brandCopy}>
-                <Text style={[styles.brand, tiny && styles.brandTiny]}>Language Journey</Text>
+                <Text style={[styles.brand, compact && styles.brandCompact, tiny && styles.brandTiny]}>Language Journey</Text>
                 <Text style={styles.brandCaption}>دنیای تازه‌ای با هر جمله</Text>
               </View>
             </View>
-            <View style={[styles.headerTag, tiny && styles.headerTagTiny]}>
+            <View style={[styles.headerTag, compact && styles.headerTagCompact, tiny && styles.headerTagTiny]}>
               <View style={styles.liveDot} />
-              <Text style={styles.headerTagText}>{tiny ? `${fa(activeLanguages.length)} مسیر` : `${fa(activeLanguages.length)} مسیر آمادهٔ شروع`}</Text>
+              <Text style={[styles.headerTagText, compact && styles.headerTagTextCompact]}>{tiny ? `${fa(activeLanguages.length)} مسیر` : `${fa(activeLanguages.length)} مسیر آمادهٔ شروع`}</Text>
             </View>
           </View>
 
@@ -111,22 +114,26 @@ export default function LanguagesHome() {
             colors={['#17112F', '#29205E', '#4A348F']}
             start={{ x: 0.95, y: 0.08 }}
             end={{ x: 0.05, y: 1 }}
-            style={[styles.hero, compact && styles.heroCompact]}
+            style={[styles.hero, compact && styles.heroCompact, stackHero && styles.heroStacked]}
           >
             <View pointerEvents="none" style={styles.heroGlowOne} />
             <View pointerEvents="none" style={styles.heroGlowTwo} />
-            <View style={[styles.heroCopy, compact && styles.heroCopyCompact]}>
-              <View style={styles.eyebrow}>
+            <View style={[styles.heroCopy, compact && styles.heroCopyCompact, stackHero && styles.heroCopyStacked]}>
+              <View style={[styles.eyebrow, compact && styles.eyebrowCompact]}>
                 <Sparkles size={14} color="#FFE19A" />
-                <Text style={styles.eyebrowText}>یک قدم کوچک، یک دنیای بزرگ</Text>
+                <Text style={[styles.eyebrowText, compact && styles.eyebrowTextCompact]} numberOfLines={compact ? 1 : undefined}>یک قدم کوچک، یک دنیای بزرگ</Text>
               </View>
-              <Text accessibilityRole="header" style={[styles.title, compact && styles.titleCompact]}>
+              <Text accessibilityRole="header" style={[styles.title, compact && styles.titleCompact, stackHero && styles.titleStacked]}>
                 کلمات را کشف کن؛{'\n'}<Text style={styles.titleAccent}>دنیاها را باز کن.</Text>
               </Text>
-              <Text style={styles.description}>
+              <Text
+                style={[styles.description, compact && styles.descriptionCompact, stackHero && styles.descriptionStacked]}
+                numberOfLines={compact && !stackHero ? 3 : undefined}
+                ellipsizeMode="tail"
+              >
                 مسیر خودت را انتخاب کن؛ با جمله‌های واقعی، صدا و تمرین‌های کوتاه، هر روز کمی جلوتر برو.
               </Text>
-              <View style={styles.heroFacts}>
+              <View style={[styles.heroFacts, compact && styles.heroFactsCompact]}>
                 <View style={styles.fact}>
                   <Layers3 size={15} color="#D8C5FF" />
                   <Text style={styles.factText}>دو مسیر آموزشی</Text>
@@ -138,8 +145,8 @@ export default function LanguagesHome() {
                 </View>
               </View>
             </View>
-            <FantasyPortal compact={compact} tiny={tiny} />
-            {compact && (
+            <FantasyPortal compact={compact} tiny={tiny} stacked={stackHero} />
+            {stackHero && (
               <View style={styles.mobileTrail} pointerEvents="none" accessibilityElementsHidden>
                 <View style={styles.trailDot} /><View style={styles.trailLine} /><View style={[styles.trailDot, styles.trailDotMint]} />
                 <Text style={styles.trailText}>شروع سفر تو همین‌جاست</Text>
@@ -147,7 +154,7 @@ export default function LanguagesHome() {
             )}
           </LinearGradient>
 
-          <View style={styles.section}>
+          <View style={[styles.section, compact && styles.sectionCompact]}>
             <View style={styles.sectionHeading}>
               <View style={styles.sectionEyebrowRow}><Sparkles size={13} color={violet} /><Text style={styles.sectionEyebrow}>CHOOSE YOUR JOURNEY</Text></View>
               <Text style={styles.sectionTitle}>کدام دنیا را باز کنیم؟</Text>
@@ -156,7 +163,7 @@ export default function LanguagesHome() {
             {!tiny && <View style={styles.sectionCount}><Text style={styles.sectionCountText}>{fa(activeLanguages.length)} / مسیرهای فعال</Text></View>}
           </View>
 
-          <View style={[styles.cards, compact && styles.cardsCompact]}>
+          <View style={[styles.cards, compact && !singleColumnCards && styles.cardsPhone, singleColumnCards && styles.cardsStacked]}>
             {activeLanguages.map(language => {
               const accent = accents[language.id as keyof typeof accents];
               const active = hovered === language.id || focused === language.id;
@@ -173,51 +180,52 @@ export default function LanguagesHome() {
                   onPress={() => router.push(language.home as never)}
                   style={({ pressed }) => [
                     styles.card,
-                    compact && styles.cardCompact,
+                    compact && !singleColumnCards && styles.cardPhone,
+                    singleColumnCards && styles.cardCompact,
                     { borderColor: active ? accent.ink : accent.line },
                     active && styles.cardActive,
                     pressed && styles.cardPressed,
                   ]}
                 >
-                  <LinearGradient colors={accent.gradient} start={{ x: 0.95, y: 0 }} end={{ x: 0.05, y: 1 }} style={styles.cardCover}>
+                  <LinearGradient colors={accent.gradient} start={{ x: 0.95, y: 0 }} end={{ x: 0.05, y: 1 }} style={[styles.cardCover, compact && !singleColumnCards && styles.cardCoverPhone]}>
                     <View pointerEvents="none" style={[styles.coverOrb, { borderColor: accent.orbit }]} />
                     <View pointerEvents="none" style={[styles.coverGlow, { backgroundColor: accent.orbit }]} />
-                    <View style={styles.cardTop}>
-                      <View style={styles.languageIcon}><Text style={[styles.code, { color: accent.ink }]}>{language.id.toUpperCase()}</Text></View>
-                      <View style={styles.available}>
-                        <View style={styles.smallDot} />
-                        <Text style={styles.availableText}>{accent.available}</Text>
+                    <View style={[styles.cardTop, compact && !singleColumnCards && styles.cardTopPhone]}>
+                      <View style={[styles.languageIcon, compact && !singleColumnCards && styles.languageIconPhone]}><Text style={[styles.code, compact && !singleColumnCards && styles.codePhone, { color: accent.ink }]}>{language.id.toUpperCase()}</Text></View>
+                      <View style={[styles.available, compact && !singleColumnCards && styles.availablePhone]}>
+                        <View style={[styles.smallDot, compact && !singleColumnCards && styles.smallDotPhone]} />
+                        <Text style={[styles.availableText, compact && !singleColumnCards && styles.availableTextPhone]}>{accent.available}</Text>
                       </View>
                     </View>
-                    <View style={styles.cardGreetingRow}>
-                      <View style={styles.greetingOrb}><BookOpen size={20} color="#FFFFFF" /></View>
+                    <View style={[styles.cardGreetingRow, compact && !singleColumnCards && styles.cardGreetingRowPhone]}>
+                      <View style={[styles.greetingOrb, compact && !singleColumnCards && styles.greetingOrbPhone]}><BookOpen size={20} color="#FFFFFF" /></View>
                       <View style={styles.greetingWrap}>
-                        <Text style={styles.greeting}>{accent.greeting}</Text>
-                        <Text style={styles.greetingCaption}>{accent.caption}</Text>
+                        <Text style={[styles.greeting, compact && !singleColumnCards && styles.greetingPhone]}>{accent.greeting}</Text>
+                        <Text style={[styles.greetingCaption, compact && !singleColumnCards && styles.greetingCaptionPhone]} numberOfLines={compact && !singleColumnCards ? 1 : undefined}>{accent.caption}</Text>
                       </View>
                     </View>
                     <View style={styles.coverSparkle}><Sparkles size={17} color="#FFF0BA" /></View>
                   </LinearGradient>
 
-                  <View style={[styles.cardBody, compact && styles.cardBodyCompact]}>
-                    <View style={styles.cardIdentity}>
+                  <View style={[styles.cardBody, compact && !singleColumnCards && styles.cardBodyPhone, compact && singleColumnCards && styles.cardBodyCompact]}>
+                    <View style={[styles.cardIdentity, compact && !singleColumnCards && styles.cardIdentityPhone]}>
                       <View style={styles.languageIdentity}>
-                        <Text style={styles.languageName}>{language.name}</Text>
-                        <Text style={[styles.nativeName, { color: accent.ink }]}>{language.nativeName}</Text>
+                        <Text style={[styles.languageName, compact && !singleColumnCards && styles.languageNamePhone]}>{language.name}</Text>
+                        <Text style={[styles.nativeName, compact && !singleColumnCards && styles.nativeNamePhone, { color: accent.ink }]}>{language.nativeName}</Text>
                       </View>
-                      <View style={[styles.cardBadge, { backgroundColor: accent.soft }]}><Text style={[styles.cardBadgeText, { color: accent.ink }]}>مسیر مستقل</Text></View>
+                      <View style={[styles.cardBadge, compact && !singleColumnCards && styles.cardBadgePhone, { backgroundColor: accent.soft }]}><Text style={[styles.cardBadgeText, compact && !singleColumnCards && styles.cardBadgeTextPhone, { color: accent.ink }]}>مسیر مستقل</Text></View>
                     </View>
-                    <Text style={styles.cardDescription}>{language.description}</Text>
-                    <View style={styles.meta}>
-                      <View style={styles.metaItem}><BookOpen size={14} color={muted} /><Text style={styles.metaText}>{fa(language.lessonsCount)} درس</Text></View>
+                    <Text style={[styles.cardDescription, compact && !singleColumnCards && styles.cardDescriptionPhone]} numberOfLines={compact && !singleColumnCards ? 2 : undefined} ellipsizeMode="tail">{language.description}</Text>
+                    <View style={[styles.meta, compact && !singleColumnCards && styles.metaPhone]}>
+                      <View style={[styles.metaItem, compact && !singleColumnCards && styles.metaItemPhone]}><BookOpen size={14} color={muted} /><Text style={[styles.metaText, compact && !singleColumnCards && styles.metaTextPhone]}>{fa(language.lessonsCount)} درس</Text></View>
                       <View style={styles.metaDot} />
-                      <View style={styles.metaItem}><Headphones size={14} color={muted} /><Text style={styles.metaText}>تلفظ صوتی</Text></View>
+                      <View style={[styles.metaItem, compact && !singleColumnCards && styles.metaItemPhone]}><Headphones size={14} color={muted} /><Text style={[styles.metaText, compact && !singleColumnCards && styles.metaTextPhone]}>تلفظ صوتی</Text></View>
                       <View style={styles.metaDot} />
-                      <Text style={styles.metaText}>راهنمای فارسی</Text>
+                      <Text style={[styles.metaText, compact && !singleColumnCards && styles.metaTextPhone]}>راهنمای فارسی</Text>
                     </View>
-                    <View style={[styles.enter, { backgroundColor: accent.ink }]}>
-                      <Text style={styles.enterText}>شروع سفر {language.name}</Text>
-                      <View style={styles.enterIcon}><ChevronLeft size={18} color="#FFFFFF" /></View>
+                    <View style={[styles.enter, compact && !singleColumnCards && styles.enterPhone, { backgroundColor: accent.ink }]}>
+                      <Text style={[styles.enterText, compact && !singleColumnCards && styles.enterTextPhone]} numberOfLines={1}>شروع سفر {language.name}</Text>
+                      <View style={[styles.enterIcon, compact && !singleColumnCards && styles.enterIconPhone]}><ChevronLeft size={16} color="#FFFFFF" /></View>
                     </View>
                   </View>
                 </Pressable>
@@ -323,10 +331,15 @@ export default function LanguagesHome() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8F6FB' },
   page: { flexGrow: 1, paddingHorizontal: 40, paddingTop: 24, paddingBottom: 36 },
-  pageCompact: { paddingHorizontal: 18, paddingTop: 16 },
+  pageCompact: { paddingHorizontal: 14, paddingTop: 8, paddingBottom: 22 },
   content: { width: '100%', maxWidth: 1120, alignSelf: 'center' },
   header: { minHeight: 55, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 26 },
+  headerCompact: { minHeight: 40, gap: 8, marginBottom: 12 },
   headerTiny: { alignItems: 'stretch', flexDirection: 'column', gap: 8 },
+  logoCompact: { width: 36, height: 36, borderRadius: 12 },
+  brandCompact: { fontSize: 15 },
+  headerTagCompact: { paddingHorizontal: 8, paddingVertical: 5 },
+  headerTagTextCompact: { fontSize: 9 },
   brandRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 11 },
   logo: { width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   logoSpark: { position: 'absolute', right: -3, top: -3, width: 17, height: 17, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#423478' },
@@ -339,30 +352,41 @@ const styles = StyleSheet.create({
   headerTagText: { fontFamily: 'Vazirmatn', color: '#695C84', fontSize: 10, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#81A869' },
   hero: { position: 'relative', minHeight: 330, overflow: 'hidden', borderRadius: 30, borderWidth: 1, borderColor: '#514382', paddingHorizontal: 34, paddingVertical: 27, flexDirection: 'row-reverse', alignItems: 'center', gap: 16, shadowColor: '#231752', shadowOpacity: .18, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
-  heroCompact: { minHeight: 0, paddingHorizontal: 19, paddingVertical: 22, borderRadius: 25, flexDirection: 'column', alignItems: 'stretch', gap: 7 },
+  heroCompact: { minHeight: 174, paddingHorizontal: 13, paddingVertical: 12, borderRadius: 21, flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  heroStacked: { minHeight: 0, paddingHorizontal: 16, paddingVertical: 15, borderRadius: 21, flexDirection: 'column', alignItems: 'stretch', gap: 7 },
   heroGlowOne: { position: 'absolute', top: -126, right: '28%', width: 315, height: 315, borderRadius: 158, backgroundColor: 'rgba(156,119,250,0.18)' },
   heroGlowTwo: { position: 'absolute', bottom: -172, left: -74, width: 330, height: 330, borderRadius: 165, backgroundColor: 'rgba(78,213,189,0.12)' },
   heroCopy: { flex: 1, alignItems: 'flex-end', gap: 11, zIndex: 2 },
-  heroCopyCompact: { width: '100%' },
+  heroCopyCompact: { flex: 1, minWidth: 0, gap: 7 },
+  heroCopyStacked: { width: '100%' },
   eyebrow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 7, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
+  eyebrowCompact: { maxWidth: '100%', gap: 4, paddingHorizontal: 7, paddingVertical: 4 },
   eyebrowText: { fontFamily: 'Vazirmatn', color: '#FFE9B4', fontSize: 10, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  eyebrowTextCompact: { flexShrink: 1, fontSize: 9 },
   title: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 37, lineHeight: 58, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl', letterSpacing: -.7 },
-  titleCompact: { fontSize: 28, lineHeight: 44 },
+  titleCompact: { fontSize: 21, lineHeight: 30 },
+  titleStacked: { fontSize: 24, lineHeight: 34 },
   titleAccent: { color: '#D8C4FF' },
   description: { maxWidth: 480, alignSelf: 'flex-end', fontFamily: 'Vazirmatn', color: '#E1DAF7', fontSize: 12, lineHeight: 24, textAlign: 'right', writingDirection: 'rtl' },
+  descriptionCompact: { fontSize: 10, lineHeight: 17 },
+  descriptionStacked: { fontSize: 11, lineHeight: 20 },
   heroFacts: { flexDirection: 'row-reverse', flexWrap: 'wrap', alignItems: 'center', gap: 11, marginTop: 3 },
+  heroFactsCompact: { gap: 5, marginTop: 0 },
   fact: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
   factText: { fontFamily: 'Vazirmatn', color: '#EEE9FF', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
   factDivider: { height: 13, width: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
   artStage: { position: 'relative', width: 300, height: 280, alignItems: 'center', justifyContent: 'center' },
-  artStageCompact: { width: '100%', height: 226 },
-  artStageTiny: { height: 190 },
+  artStageCompact: { width: 112, height: 112, flexShrink: 0 },
+  artStageStacked: { width: '100%', height: 112 },
+  artStageTiny: { width: '100%', height: 96 },
   artOrbit: { position: 'absolute', width: 252, height: 252, borderRadius: 126, borderWidth: 1, borderColor: 'rgba(223,206,255,0.4)', backgroundColor: 'rgba(255,255,255,0.035)' },
-  artOrbitCompact: { width: 220, height: 220, borderRadius: 110 },
-  artOrbitTiny: { width: 184, height: 184, borderRadius: 92 },
+  artOrbitCompact: { width: 108, height: 108, borderRadius: 54 },
+  artOrbitStacked: { width: 100, height: 100, borderRadius: 50 },
+  artOrbitTiny: { width: 84, height: 84, borderRadius: 42 },
   artImage: { width: 252, height: 252, borderRadius: 32, borderWidth: 1, borderColor: 'rgba(241,229,255,0.35)' },
-  artImageCompact: { width: 220, height: 220, borderRadius: 28 },
-  artImageTiny: { width: 184, height: 184, borderRadius: 24 },
+  artImageCompact: { width: 96, height: 96, borderRadius: 20 },
+  artImageStacked: { width: 88, height: 88, borderRadius: 18 },
+  artImageTiny: { width: 76, height: 76, borderRadius: 16 },
   artStarTop: { position: 'absolute', top: 17, right: 35 },
   artStarSide: { position: 'absolute', bottom: 25, left: 18 },
   mobileTrail: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 15, marginTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)' },
@@ -371,6 +395,7 @@ const styles = StyleSheet.create({
   trailLine: { width: 24, height: 1, backgroundColor: 'rgba(226,193,255,0.65)' },
   trailText: { fontFamily: 'Vazirmatn', color: '#D8D0F0', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
   section: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 31, marginBottom: 17 },
+  sectionCompact: { gap: 8, marginTop: 16, marginBottom: 10 },
   sectionHeading: { flex: 1, alignItems: 'flex-end', gap: 3 },
   sectionEyebrowRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 5 },
   sectionEyebrow: { color: '#897BAA', fontSize: 8, fontWeight: '900', letterSpacing: 1.25, textAlign: 'right', writingDirection: 'ltr' },
@@ -379,42 +404,68 @@ const styles = StyleSheet.create({
   sectionCount: { minHeight: 34, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, backgroundColor: '#F0ECF8' },
   sectionCountText: { fontFamily: 'Vazirmatn', color: '#7A6A9B', fontSize: 9, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
   cards: { flexDirection: 'row-reverse', gap: 19 },
-  cardsCompact: { flexDirection: 'column', gap: 14 },
-  card: { flex: 1, borderRadius: 24, borderWidth: 1, backgroundColor: '#FFFFFF', overflow: 'hidden', shadowColor: '#32284E', shadowOpacity: .06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 },
+  cardsPhone: { gap: 10 },
+  cardsStacked: { flexDirection: 'column', gap: 14 },
+  card: { flex: 1, minWidth: 0, borderRadius: 24, borderWidth: 1, backgroundColor: '#FFFFFF', overflow: 'hidden', shadowColor: '#32284E', shadowOpacity: .06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 },
+  cardPhone: { flexShrink: 1, borderRadius: 17 },
   cardCompact: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width: '100%' },
+  cardCoverPhone: { minHeight: 112, padding: 11 },
   cardActive: { shadowOpacity: .15, shadowRadius: 21, shadowOffset: { width: 0, height: 8 }, elevation: 5 },
   cardPressed: { opacity: .92, transform: [{ scale: .992 }] },
   cardCover: { position: 'relative', minHeight: 165, overflow: 'hidden', padding: 19, justifyContent: 'space-between' },
   coverOrb: { position: 'absolute', top: -55, left: 80, width: 210, height: 210, borderRadius: 105, borderWidth: 1, opacity: .5 },
   coverGlow: { position: 'absolute', right: -45, bottom: -100, width: 220, height: 220, borderRadius: 110, opacity: .14 },
   cardTop: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 },
+  cardTopPhone: { gap: 5 },
   languageIcon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', shadowColor: '#1A1730', shadowOpacity: .17, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  languageIconPhone: { width: 31, height: 31, borderRadius: 10 },
   code: { fontSize: 12, fontWeight: '900', letterSpacing: 1, textAlign: 'right', writingDirection: 'ltr' },
+  codePhone: { fontSize: 11 },
   available: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  availablePhone: { gap: 3, paddingHorizontal: 6, paddingVertical: 4 },
   availableText: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 9, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  availableTextPhone: { fontSize: 8 },
   smallDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#D5F6C7' },
+  smallDotPhone: { width: 4, height: 4, borderRadius: 2 },
   cardGreetingRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, zIndex: 1 },
+  cardGreetingRowPhone: { gap: 7 },
   greetingOrb: { width: 40, height: 40, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.17)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
-  greetingWrap: { alignItems: 'flex-end', gap: 2 },
+  greetingOrbPhone: { width: 29, height: 29, borderRadius: 11 },
+  greetingWrap: { minWidth: 0, flexShrink: 1, alignItems: 'flex-end', gap: 2 },
   greeting: { color: '#FFFFFF', fontSize: 31, fontWeight: '800', letterSpacing: -.8, textAlign: 'right', writingDirection: 'ltr' },
+  greetingPhone: { fontSize: 22, lineHeight: 27, letterSpacing: -.4 },
   greetingCaption: { fontFamily: 'Vazirmatn', color: 'rgba(255,255,255,0.82)', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  greetingCaptionPhone: { fontSize: 8 },
   coverSparkle: { position: 'absolute', left: 24, top: 72, opacity: .88 },
   cardBody: { padding: 20, paddingTop: 17, gap: 12 },
   cardBodyCompact: { padding: 17, gap: 10 },
+  cardBodyPhone: { padding: 10, paddingTop: 9, gap: 7 },
   cardIdentity: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 9 },
+  cardIdentityPhone: { alignItems: 'flex-start', flexWrap: 'wrap', gap: 4 },
   languageIdentity: { alignItems: 'flex-end' },
   languageName: { fontFamily: 'Vazirmatn', color: ink, fontSize: 25, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  languageNamePhone: { fontSize: 18, lineHeight: 25 },
   nativeName: { fontSize: 11, fontWeight: '700', letterSpacing: .3, textAlign: 'right', writingDirection: 'ltr' },
+  nativeNamePhone: { fontSize: 9 },
   cardBadge: { paddingHorizontal: 9, paddingVertical: 6, borderRadius: 11 },
+  cardBadgePhone: { paddingHorizontal: 6, paddingVertical: 4, borderRadius: 9 },
   cardBadgeText: { fontFamily: 'Vazirmatn', fontSize: 8, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  cardBadgeTextPhone: { fontSize: 8 },
   cardDescription: { fontFamily: 'Vazirmatn', color: muted, fontSize: 11, lineHeight: 22, textAlign: 'right', writingDirection: 'rtl' },
+  cardDescriptionPhone: { fontSize: 9, lineHeight: 16 },
   meta: { flexDirection: 'row-reverse', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  metaPhone: { gap: 4 },
   metaItem: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4 },
+  metaItemPhone: { gap: 3 },
   metaText: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  metaTextPhone: { fontSize: 8, lineHeight: 15 },
   metaDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: '#C8C2D2' },
   enter: { minHeight: 47, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 13, paddingVertical: 8, borderRadius: 14, marginTop: 1 },
+  enterPhone: { minHeight: 38, gap: 4, paddingHorizontal: 7, paddingVertical: 5, borderRadius: 11 },
   enterText: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 11, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  enterTextPhone: { fontSize: 8, flexShrink: 1 },
   enterIcon: { width: 29, height: 29, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' },
+  enterIconPhone: { width: 24, height: 24, borderRadius: 8 },
   reassurance: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, marginTop: 20, padding: 15, borderRadius: 18, backgroundColor: '#EEF4E9', borderWidth: 1, borderColor: '#E0EBD9' },
   reassuranceCompact: { alignItems: 'flex-start' },
   shield: { width: 39, height: 39, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },

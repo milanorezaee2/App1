@@ -52,6 +52,12 @@ assert.match(appText, /writingDirection: direction/);
 assert.match(appText, /Vazirmatn-ExtraBold/);
 assert.match(appText, /TextInput/);
 
+const landing = read('app/languages.tsx');
+assert.match(landing, /const singleColumnCards = waitingForWebLayout \|\| width < 340/);
+assert.match(landing, /const stackHero = waitingForWebLayout \|\| width < 350/);
+assert.match(landing, /compact && !singleColumnCards && styles\.cardsPhone/);
+assert.match(landing, /cardsPhone: \{ gap: 10 \}/, 'The initial language choices must remain side-by-side on common phone widths.');
+
 const uiFiles = [...walk('app'), ...walk('components')]
   .filter(path => path.endsWith('.tsx') && path !== 'components/AppText.tsx');
 const nativeTextImports = uiFiles.filter(path => /import\s*\{[^}]*\b(?:Text|TextInput)\b[^}]*\}\s*from\s*['"]react-native['"]/s.test(read(path)));
@@ -64,7 +70,7 @@ assert.doesNotMatch(russianHome, /flexDirection: 'row',/, 'Russian home rows sho
 assert.match(read('components/RussianBottomNav.tsx'), /flexDirection: 'row-reverse'/);
 assert.match(read('components/EnglishUI.tsx'), /progressFill: \{[^}]*alignSelf: 'flex-end'/);
 
-console.log(`Native presentation checks passed: ${weights.length} Android font faces, safe-area shell, explicit layout direction, readable text wrapper, and ${appTextImports.length} shared-text screens/components.`);
+console.log(`Native presentation checks passed: ${weights.length} Android font faces, safe areas, explicit layout direction, responsive two-column landing page, readable text wrapper, and ${appTextImports.length} shared-text screens/components.`);
 
 function* walk(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
