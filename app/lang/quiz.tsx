@@ -1,7 +1,8 @@
 // Multiple-choice quiz screen — auto-generated from the lesson's words.
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Trophy, ArrowRight, RotateCcw, Star } from 'lucide-react-native';

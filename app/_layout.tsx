@@ -3,22 +3,16 @@ import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { SplashScreen } from 'expo-router';
-import { I18nManager, View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import {
-  Vazirmatn_400Regular,
-  Vazirmatn_500Medium,
-  Vazirmatn_700Bold,
-} from '@expo-google-fonts/vazirmatn';
+import { Platform, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FONT_SOURCES } from '@/lib/fontSources';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { getPairingState, isOnboardingComplete } from '@/lib/storage';
 import { isSupabaseConfigured } from '@/lib/pairing';
-import { RtlDirection } from '@/lib/theme';
+import { Colors, LtrDirection } from '@/lib/theme';
 import { useRealAgent } from '@/lib/useRealAgent';
 
-I18nManager.forceRTL(true);
-I18nManager.allowRTL(true);
 SplashScreen.preventAutoHideAsync();
 
 function RuntimeGate() {
@@ -57,12 +51,7 @@ function CompanionRuntime() {
  */
 export default function RootLayout() {
   useFrameworkReady();
-  const pathname = usePathname();
-  const [fontsLoaded, fontError] = useFonts({
-    Vazirmatn: Vazirmatn_400Regular,
-    'Vazirmatn-Medium': Vazirmatn_500Medium,
-    'Vazirmatn-Bold': Vazirmatn_700Bold,
-  });
+  const [fontsLoaded, fontError] = useFonts(FONT_SOURCES);
 
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
@@ -73,18 +62,44 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <View style={{ flex: 1, ...RtlDirection }}>
-          <RuntimeGate />
-          <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
-            <Stack.Screen name="index" />
-            <Stack.Screen name="agent" />
-            <Stack.Screen name="permissions" />
-            <Stack.Screen name="lang/index" />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style={pathname === '/lang' || pathname === '/languages' ? 'dark' : 'light'} />
-        </View>
+        <AppFrame />
       </ErrorBoundary>
     </SafeAreaProvider>
+  );
+}
+
+/**
+ * Keep app content out of Android's status/navigation bars and use the same
+ * predictable LTR structural canvas as the web export. Persian text direction
+ * is applied per text node by AppText, not by mirroring the whole Yoga tree.
+ */
+function AppFrame() {
+  const pathname = usePathname();
+  const insets = useSafeAreaInsets();
+  const darkHeaderRoute = pathname === '/course/lesson' || pathname.startsWith('/learn/ru/lesson');
+  const topInsetColor = darkHeaderRoute ? '#4A3A9A' : '#F8F6FB';
+  const statusBarStyle = darkHeaderRoute ? 'light' : 'dark';
+  const bottomInsetColor = Colors.neutral[950];
+
+  return (
+    <View style={{ flex: 1, backgroundColor: bottomInsetColor }}>
+      {Platform.OS !== 'web' && insets.top > 0 ? (
+        <View pointerEvents="none" style={{ height: insets.top, backgroundColor: topInsetColor }} />
+      ) : null}
+      <View style={{ flex: 1, ...LtrDirection }}>
+        <RuntimeGate />
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
+          <Stack.Screen name="index" />
+          <Stack.Screen name="agent" />
+          <Stack.Screen name="permissions" />
+          <Stack.Screen name="lang/index" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </View>
+      {Platform.OS !== 'web' && insets.bottom > 0 ? (
+        <View pointerEvents="none" style={{ height: insets.bottom, backgroundColor: bottomInsetColor }} />
+      ) : null}
+      <StatusBar style={statusBarStyle} />
+    </View>
   );
 }

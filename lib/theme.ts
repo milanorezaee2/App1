@@ -143,18 +143,18 @@ export const CategoryLabels: Record<string, string> = {
 /**
  * Text/layout direction helpers.
  *
- * On native (the shipping Android APK) `direction: 'rtl' | 'ltr'` is a real
- * Yoga style property that flips the layout of every child view.
- * `react-native-web` does not support `direction` — it logs
- * `Invalid style property of "direction"` and strips it on every render — so on
- * web we use `writingDirection`, which react-native-web compiles to the CSS
- * `direction` property. The RTL case is already covered globally by
- * `document.documentElement.dir = 'rtl'` (see index.js), so it stays empty there.
+ * The app uses an LTR structural canvas on both web and native so explicit
+ * `row-reverse` layouts have identical ordering and Android does not mirror
+ * icon placement twice. Individual text nodes declare their own script
+ * direction (`writingDirection`); AppText also detects Persian/Arabic text.
+ * The document remains `dir="rtl"` for browser semantics, while #root is LTR
+ * to match Yoga. Legacy device-control routes may still opt into RtlDirection.
  */
 type DirectionStyle = ViewStyle & TextStyle;
 
 export const RtlDirection: DirectionStyle =
-  Platform.OS === 'web' ? {} : { direction: 'rtl' };
+  Platform.OS === 'web' ? { writingDirection: 'rtl' } : { direction: 'rtl' };
 
+/** Structural layout direction; Persian text is directed separately. */
 export const LtrDirection: DirectionStyle =
   Platform.OS === 'web' ? { writingDirection: 'ltr' } : { direction: 'ltr' };

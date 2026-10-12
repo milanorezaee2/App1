@@ -1,6 +1,7 @@
 import { findGuidedUnit } from '@/lib/languages/guidedCourses';
 import { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { GermanCoursePage as CoursePage, GermanCourseButton as CourseButton, germanCourseStyles as s } from '@/components/GermanCourseUI';
 import { findGermanUnit, previousGermanUnit, unitHref, unitReviewHref } from '@/lib/languages/germanUnits';

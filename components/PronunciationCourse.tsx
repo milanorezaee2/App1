@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { ViewStyle } from 'react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { StatusBar } from 'expo-status-bar';
 import * as Speech from 'expo-speech';
 import { ArrowLeft, ChevronLeft, ChevronRight, RotateCcw, Volume2 } from 'lucide-react-native';
@@ -434,7 +435,7 @@ function ActionButton({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { minHeight: 72, width: '100%', maxWidth: 980, alignSelf: 'center', flexDirection: 'row-reverse', alignItems: 'center', gap: 11, paddingHorizontal: 18, paddingTop: 45, paddingBottom: 10, borderBottomWidth: 1 },
+  header: { minHeight: 72, width: '100%', maxWidth: 980, alignSelf: 'center', flexDirection: 'row-reverse', alignItems: 'center', gap: 11, paddingHorizontal: 18, paddingTop: 14, paddingBottom: 10, borderBottomWidth: 1 },
   headerCopy: { flex: 1, alignItems: 'flex-end', gap: 2 },
   brand: { fontSize: 8, fontWeight: '900', letterSpacing: 1.1, writingDirection: 'ltr' },
   headerTitle: { fontSize: 16, lineHeight: 24, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },

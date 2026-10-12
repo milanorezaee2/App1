@@ -3,7 +3,8 @@
 // not a route.
 
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import * as Speech from 'expo-speech';
 import {
   Volume2,
@@ -86,7 +87,7 @@ const topBarStyles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 56,
+    paddingTop: 14,
     paddingBottom: Spacing.md,
     paddingHorizontal: Spacing.lg,
     backgroundColor: Colors.neutral[850],

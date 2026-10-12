@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { ChevronLeft, Volume2 } from 'lucide-react-native';
 import type { LearningLesson } from '@/lib/languages/types';
 import { EnglishPalette as Palette } from '@/components/EnglishSupplementTask';

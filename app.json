@@ -28,7 +28,44 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Vazirmatn",
+                "fontDefinitions": [
+                  {
+                    "path": "./node_modules/@expo-google-fonts/vazirmatn/400Regular/Vazirmatn_400Regular.ttf",
+                    "weight": 400
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/vazirmatn/500Medium/Vazirmatn_500Medium.ttf",
+                    "weight": 500
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/vazirmatn/600SemiBold/Vazirmatn_600SemiBold.ttf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/vazirmatn/700Bold/Vazirmatn_700Bold.ttf",
+                    "weight": 700
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/vazirmatn/800ExtraBold/Vazirmatn_800ExtraBold.ttf",
+                    "weight": 800
+                  },
+                  {
+                    "path": "./node_modules/@expo-google-fonts/vazirmatn/900Black/Vazirmatn_900Black.ttf",
+                    "weight": 900
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
       "expo-web-browser",
       [
         "expo-audio",

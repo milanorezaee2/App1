@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text, TextInput } from '@/components/AppText';
 import { useLocalSearchParams } from 'expo-router';
 import { GermanCoursePage, GermanCourseButton, germanCourseStyles as s } from '@/components/GermanCourseUI';
 import { GermanPalette as Palette } from '@/components/germanTheme';

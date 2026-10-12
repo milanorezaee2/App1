@@ -1,5 +1,7 @@
 import { Component, ReactNode } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Platform, View, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text } from '@/components/AppText';
 import { Colors, Typography, Spacing } from '@/lib/theme';
 
 interface Props {
@@ -24,17 +26,19 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-          <Text style={styles.title}>مشکلی پیش آمد</Text>
-          <Text style={styles.subtitle}>متن زیر را اسکرین‌شات بگیرید و ارسال کنید:</Text>
-          <View style={styles.box}>
-            <Text style={styles.errorText} selectable>
-              {this.state.error.name}: {this.state.error.message}
-              {'\n\n'}
-              {this.state.error.stack}
-            </Text>
-          </View>
-        </ScrollView>
+        <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+            <Text style={styles.title}>مشکلی پیش آمد</Text>
+            <Text style={styles.subtitle}>متن زیر را اسکرین‌شات بگیرید و ارسال کنید:</Text>
+            <View style={styles.box}>
+              <Text style={styles.errorText} selectable>
+                {this.state.error.name}: {this.state.error.message}
+                {'\n\n'}
+                {this.state.error.stack}
+              </Text>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
       );
     }
     return this.props.children;
@@ -43,7 +47,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.neutral[950] },
-  content: { padding: Spacing.lg, paddingTop: 60 },
+  scroll: { flex: 1 },
+  content: { padding: Spacing.lg, paddingTop: Platform.OS === 'web' ? 60 : 36 },
   title: {
     fontFamily: Typography.fontFamily,
     fontSize: Typography.sizes.xl,

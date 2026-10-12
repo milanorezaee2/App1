@@ -1,6 +1,7 @@
 import { FEATURES } from '@/lib/features';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text, TextInput } from '@/components/AppText';
 import { ShieldCheck } from 'lucide-react-native';
 import { PageNavigation } from '@/components/PageNavigation';
 import { supabase } from '@/lib/supabase';

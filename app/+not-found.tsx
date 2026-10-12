@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { PageNavigation } from '@/components/PageNavigation';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Colors, Typography } from '@/lib/theme';
 
 export default function NotFoundScreen() {

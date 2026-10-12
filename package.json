@@ -23,6 +23,7 @@
     "validate:speech-policy": "node scripts/verify-speech-policy.mjs",
     "validate:backup": "node scripts/verify-english-backup.mjs",
     "validate:a11y": "node scripts/verify-accessibility-static.mjs",
+    "validate:native-ui": "node scripts/verify-native-presentation.mjs",
     "validate:pronunciation": "node scripts/verify-pronunciation-course.mjs",
     "validate:personal-sync": "node scripts/verify-personal-sync.mjs",
     "validate:english-four": "node scripts/verify-english-four.cjs",

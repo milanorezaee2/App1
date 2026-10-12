@@ -1,7 +1,8 @@
 // Flashcard screen — flip through one lesson's words with pronunciation.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Check, RotateCw, ArrowRight, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react-native';

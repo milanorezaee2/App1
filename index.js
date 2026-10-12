@@ -13,20 +13,25 @@
  */
 import { Alert, I18nManager, Platform } from 'react-native';
 
-// This is a Persian (Farsi) app — its UI is always RTL regardless of the
-// phone's system language. Setting it here, at the very top of the entry file,
-// makes sure it runs before ANY other module so the direction is applied
-// from the very first frame.
-try {
-  I18nManager.allowRTL(true);
-  I18nManager.forceRTL(true);
-} catch (rtlError) {
-  // Fall through silently — the layout wrapper in app/_layout.tsx also
-  // forces RTL visually via `direction: 'rtl'`.
+// The interface is Persian, but its layout uses an explicit LTR structural
+// canvas with `row-reverse` for RTL rows. Forcing Yoga itself to RTL reverses
+// those rows a second time on Android and also mirrors physical left/right
+// offsets, making icons, buttons and cards land on the wrong side of the APK.
+// Keep RTL available for text shaping, reset an older forced-RTL preference,
+// and let the app root set its structural direction explicitly.
+if (Platform.OS !== 'web') {
+  try {
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(false);
+    I18nManager.swapLeftAndRightInRTL(false);
+  } catch (rtlError) {
+    // Text direction is also set explicitly on app text; layout degrades safely.
+  }
 }
 
-// On web, `direction: 'rtl'` in StyleSheet is not supported by react-native-web,
-// so set the DOM direction globally instead — the whole tree inherits it.
+// On web keep Persian document semantics/reading order. The rendered #root
+// deliberately overrides this to LTR for structural layout; AppText and each
+// screen apply RTL to Persian text and row-reverse to Persian-oriented controls.
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   try {
     document.documentElement.dir = 'rtl';

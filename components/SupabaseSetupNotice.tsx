@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Database, KeyRound, ShieldCheck } from 'lucide-react-native';
 import { Colors, Radius, Spacing, Typography } from '@/lib/theme';
 

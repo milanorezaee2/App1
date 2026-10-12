@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { SENTENCE_LESSONS, type SentenceLesson } from '@/lib/courseContent';
 import type { Task } from '@/lib/englishSupplement/content';
 import { EnglishSupplementTask, supplementStyles as s } from './EnglishSupplementTask';

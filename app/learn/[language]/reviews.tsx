@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { GermanCoursePage as CoursePage, GermanCourseButton as CourseButton, germanCourseStyles as s } from '@/components/GermanCourseUI';
 import { GERMAN_SENTENCE_LEVELS, GERMAN_SENTENCE_LESSONS } from '@/lib/languages/germanSentenceCourse';

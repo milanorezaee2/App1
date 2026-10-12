@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { Check } from 'lucide-react-native';
 import { COURSE_LEVELS, type CourseLevelId } from '@/lib/courseContent';
 import { EnglishPalette as Palette } from '@/components/EnglishSupplementTask';
@@ -109,7 +110,7 @@ export function EnglishSectionHeading({
 
 const styles = StyleSheet.create({
   progressTrack: { width: '100%', borderRadius: 999, overflow: 'hidden', backgroundColor: '#E7EAF2' },
-  progressFill: { height: '100%', borderRadius: 999, alignSelf: 'flex-start' },
+  progressFill: { height: '100%', borderRadius: 999, alignSelf: 'flex-end' },
   rail: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 2 },
   railRtl: { flexDirection: 'row-reverse' },
   railItem: { flex: 1, flexDirection: 'row', alignItems: 'center' },

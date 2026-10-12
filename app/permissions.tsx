@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, PermissionsAndroid, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/AppText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
@@ -119,12 +120,12 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.neutral[950],
-    paddingTop: 52,
+    paddingTop: Platform.OS === 'web' ? 52 : 28,
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
     justifyContent: 'center',
   },
-  pageNavigation: { position: 'absolute', top: 52, right: Spacing.lg, zIndex: 10 },
+  pageNavigation: { position: 'absolute', top: Platform.OS === 'web' ? 52 : 28, right: Spacing.lg, zIndex: 10 },
   hero: { borderRadius: Radius.xl, padding: Spacing.xl, alignItems: 'center', marginBottom: Spacing.lg },
   iconWrap: {
     width: 78,
