@@ -384,6 +384,62 @@ export default function LanguagesHome() {
             )}
           </View>
 
+          {/* فانتزی جذاب — پر کردن گپ سفید پایانی با محتوای تصویری */}
+          <LinearGradient
+            colors={['#1E0F3A', '#3B1E6B', '#6D3BD9', '#9A6CFF']}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
+            style={[styles.fantasyCard, compact && styles.fantasyCardCompact]}
+          >
+            <View pointerEvents="none" style={styles.fantasyGlowA} />
+            <View pointerEvents="none" style={styles.fantasyGlowB} />
+            <View pointerEvents="none" style={styles.fantasyStarsTop}><Sparkles size={16} color="#FFEBA9" fill="#FFEBA9" /></View>
+            <View pointerEvents="none" style={styles.fantasyStarsBottom}><Star size={14} color="#C6F4E5" fill="#C6F4E5" /></View>
+
+            <View style={[styles.fantasyInner, compact && styles.fantasyInnerCompact]}>
+              <View style={[styles.fantasyArtWrap, compact && styles.fantasyArtWrapCompact]}>
+                <View style={styles.fantasyOrbit} />
+                <Image
+                  source={require('../assets/language-learning-hero.jpg')}
+                  resizeMode="cover"
+                  style={[styles.fantasyImage, compact && styles.fantasyImageCompact]}
+                />
+                <View style={styles.fantasyBookBadge}>
+                  <BookOpen size={14} color="#FFFFFF" />
+                  <Text style={styles.fantasyBookText}>کتاب جادویی</Text>
+                </View>
+              </View>
+
+              <View style={[styles.fantasyCopy, compact && styles.fantasyCopyCompact]}>
+                <View style={styles.fantasyEyebrow}>
+                  <Sparkles size={12} color="#FFE19A" />
+                  <Text style={styles.fantasyEyebrowText}>داستان تو اینجاست</Text>
+                  <View style={styles.fantasyEyebrowDot} />
+                </View>
+                <Text style={[styles.fantasyTitle, compact && styles.fantasyTitleCompact]}>
+                  هر کلمه،{"\n"}<Text style={styles.fantasyTitleAccent}>یک کلید جادویی</Text>
+                </Text>
+                <Text style={styles.fantasyDesc}>
+                  کتاب رو باز کن، عبارت‌ها مثل ستاره می‌درخشند. با هر جمله، دنیای جدیدی باز می‌شود — از سلام اول تا گفت‌وگوی روان.
+                </Text>
+                <View style={styles.fantasyPoints}>
+                  <View style={styles.fantasyPoint}><View style={styles.fantasyPointDot} /><Text style={styles.fantasyPointText}>قصه‌های تصویری با صدا</Text></View>
+                  <View style={styles.fantasyPoint}><View style={[styles.fantasyPointDot, { backgroundColor: '#9FE5CD' }]} /><Text style={styles.fantasyPointText}>مرور جادویی با تکرار هوشمند</Text></View>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="شروع ماجراجویی فانتزی"
+                  onPress={() => router.push(activeLanguages[0]?.home as never)}
+                  style={({ pressed }) => [styles.fantasyCTA, pressed && styles.cardPressed]}
+                >
+                  <Text style={styles.fantasyCTAText}>شروع ماجراجویی ✨</Text>
+                  <View style={styles.fantasyCTAIcon}><ChevronLeft size={18} color="#5E42C5" /></View>
+                </Pressable>
+                <Text style={styles.fantasyFootnote}>بدون تبلیغ • مناسب همه سنین • هر روز ۵ دقیقه</Text>
+              </View>
+            </View>
+          </LinearGradient>
+
           <View style={styles.footerExtended}>
             <View style={styles.footerTop}>
               <View style={styles.footerBrandRow}>
@@ -575,6 +631,38 @@ const styles = StyleSheet.create({
   benefitCopy: { flex: 1, gap: 3, alignItems: 'flex-end' },
   benefitTitle: { fontFamily: 'Vazirmatn', color: ink, fontSize: 11, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
   benefitDesc: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, lineHeight: 16, textAlign: 'right', writingDirection: 'rtl' },
+  fantasyCard: { marginTop: 22, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#514382', padding: 18, minHeight: 340, shadowColor: '#231752', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 6, position: 'relative' },
+  fantasyCardCompact: { padding: 16, minHeight: 0, borderRadius: 22 },
+  fantasyGlowA: { position: 'absolute', top: -80, right: -40, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255, 235, 169, 0.12)' },
+  fantasyGlowB: { position: 'absolute', bottom: -90, left: -50, width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(78, 213, 189, 0.13)' },
+  fantasyStarsTop: { position: 'absolute', top: 14, right: 18, opacity: 0.9 },
+  fantasyStarsBottom: { position: 'absolute', bottom: 14, left: 18, opacity: 0.8 },
+  fantasyInner: { flexDirection: 'row-reverse', alignItems: 'center', gap: 18, zIndex: 2 },
+  fantasyInnerCompact: { flexDirection: 'column', alignItems: 'stretch', gap: 14 },
+  fantasyArtWrap: { position: 'relative', width: 200, height: 220, alignItems: 'center', justifyContent: 'center' },
+  fantasyArtWrapCompact: { width: '100%', height: 190 },
+  fantasyOrbit: { position: 'absolute', width: 170, height: 170, borderRadius: 85, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', backgroundColor: 'rgba(255,255,255,0.04)' },
+  fantasyImage: { width: 160, height: 160, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
+  fantasyImageCompact: { width: 180, height: 180, borderRadius: 18 },
+  fantasyBookBadge: { position: 'absolute', bottom: 6, right: 12, flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
+  fantasyBookText: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 9, fontWeight: '700' },
+  fantasyCopy: { flex: 1, gap: 10, alignItems: 'flex-end' },
+  fantasyCopyCompact: { gap: 8 },
+  fantasyEyebrow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.11)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
+  fantasyEyebrowText: { fontFamily: 'Vazirmatn', color: '#FFE9B4', fontSize: 9, fontWeight: '700' },
+  fantasyEyebrowDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#9FE5CD' },
+  fantasyTitle: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 26, lineHeight: 38, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl' },
+  fantasyTitleCompact: { fontSize: 22, lineHeight: 34 },
+  fantasyTitleAccent: { color: '#FFEBA9' },
+  fantasyDesc: { fontFamily: 'Vazirmatn', color: '#E1DAF7', fontSize: 11, lineHeight: 21, textAlign: 'right', writingDirection: 'rtl' },
+  fantasyPoints: { gap: 6, alignItems: 'flex-end', marginTop: 2 },
+  fantasyPoint: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  fantasyPointDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFEBA9' },
+  fantasyPointText: { fontFamily: 'Vazirmatn', color: '#EEE9FF', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  fantasyCTA: { marginTop: 4, minHeight: 44, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#FFFFFF', shadowColor: '#1A1730', shadowOpacity: .12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  fantasyCTAText: { fontFamily: 'Vazirmatn', color: '#5E42C5', fontSize: 12, fontWeight: '800' },
+  fantasyCTAIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0EAFE' },
+  fantasyFootnote: { fontFamily: 'Vazirmatn', color: 'rgba(225,218,247,0.8)', fontSize: 8, textAlign: 'right', writingDirection: 'rtl', marginTop: 2 },
   footerExtended: { marginTop: 22, paddingTop: 16, paddingBottom: 8, borderTopWidth: 1, borderTopColor: '#E7E1ED', gap: 12, backgroundColor: 'transparent' },
   footerTop: { gap: 12 },
   footerBrandRow: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
