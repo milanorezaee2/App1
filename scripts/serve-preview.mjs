@@ -146,12 +146,16 @@ try {
       flex: none !important;
       border-radius: 48px !important;
       overflow: hidden !important;
-      background: #ffffff !important;
+      background: #F8F6FB !important;
       position: relative !important;
       display: flex !important;
       flex-direction: column !important;
       box-shadow: 0 32px 80px -16px rgba(15,23,42,0.18), 0 12px 32px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.06), 0 0 0 12px #ffffff !important;
       border: 1px solid rgba(15,23,42,0.04) !important;
+    }
+    html:not(.arena-frame-disabled) #root > div {
+      background: #F8F6FB !important;
+      min-height: 100% !important;
     }
     html:not(.arena-frame-disabled) #root::before {
       content: '';
@@ -277,6 +281,8 @@ try {
       width: 1120px !important;
       max-width: 1120px !important;
       transform-origin: top center !important;
+      background: #F8F6FB !important;
+      min-height: calc(800px / 0.3214) !important;
     }
     #arena-keep-desktop-toggle {
       position: fixed;

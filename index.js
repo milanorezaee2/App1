@@ -71,7 +71,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
           flex: none !important;
           border-radius: 48px !important;
           overflow: hidden !important;
-          background: #ffffff !important;
+          background: #F8F6FB !important;
           position: relative !important;
           display: flex !important;
           flex-direction: column !important;
@@ -108,9 +108,11 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
           z-index: 9999;
           pointer-events: none;
         }
-        /* Safe area for notch - add top padding to first scroll content */
+        /* Safe area for notch - ensure background matches page to hide gap */
         html:not(.arena-frame-disabled) #root > div {
           padding-top: 0 !important;
+          background: #F8F6FB !important;
+          min-height: 100% !important;
         }
         /* Subtle label below frame */
         html:not(.arena-frame-disabled) body::after {
@@ -220,6 +222,8 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
           width: 1120px !important;
           max-width: 1120px !important;
           transform-origin: top center !important;
+          background: #F8F6FB !important;
+          min-height: calc(800px / 0.3214) !important;
         }
         /* Ensure the page content inside still respects scaled width */
         html.arena-keep-desktop:not(.arena-frame-disabled) #root div[style*="max-width: 1120"],
