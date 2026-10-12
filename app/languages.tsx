@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BookOpen, ChevronDown, ChevronLeft, Cloud, Globe2, Headphones, Layers3, ShieldCheck, Sparkles, Star } from 'lucide-react-native';
+import { Award, BarChart3, BookOpen, ChevronDown, ChevronLeft, Clock, Cloud, Globe2, Headphones, Layers3, Mic, RefreshCw, ShieldCheck, Sparkles, Star, TrendingUp } from 'lucide-react-native';
 import { LANGUAGES } from '@/lib/languages/catalog';
 import { FEATURES } from '@/lib/features';
 import { COURSE_LEVELS, SENTENCE_LESSONS, type CourseLevelId } from '@/lib/courseContent';
@@ -42,6 +42,49 @@ const germanLevelSummaries = ([
   { id: 3, label: 'بیان و ارتباط (B1)' },
 ] as const).map(level => ({ ...level, ...germanSentenceLevelMetrics(level.id) }));
 const totalGermanSentences = GERMAN_SENTENCE_LESSONS.reduce((count, lesson) => count + lesson.sentences.length, 0);
+
+const BENEFITS = [
+  {
+    id: 'daily',
+    title: '۵ دقیقه در روز',
+    desc: 'درس‌های کوتاه و متمرکز — بدون فشار، هر روز یک قدم',
+    icon: Clock,
+    soft: '#F0EAFE',
+    ink: '#704FD2',
+  },
+  {
+    id: 'voice',
+    title: 'تلفظ هوشمند',
+    desc: 'تحلیل صدا و بازخورد فوری برای لهجه بهتر',
+    icon: Mic,
+    soft: '#E6F5EF',
+    ink: '#197D70',
+  },
+  {
+    id: 'progress',
+    title: 'پیشرفت قابل مشاهده',
+    desc: 'نمودار هفتگی، استریک و یادآور هوشمند',
+    icon: TrendingUp,
+    soft: '#FEF3E2',
+    ink: '#B45309',
+  },
+  {
+    id: 'sync',
+    title: 'همگام بین دستگاه‌ها',
+    desc: 'با ورود ایمیلی، همه‌چیز امن ذخیره می‌شود',
+    icon: RefreshCw,
+    soft: '#EBF0FA',
+    ink: '#4267A8',
+  },
+] as const;
+
+const STATS = [
+  { label: 'مسیر فعال', value: () => `${fa(activeLanguages.length)} مسیر` },
+  { label: 'درس', value: () => `${fa(totalEnglishLessons + GERMAN_SENTENCE_LESSONS.length)} درس` },
+  { label: 'جمله', value: () => `${fa(totalEnglishSentences + totalGermanSentences)} جمله` },
+  { label: 'رضایت', value: () => '۴.۸ ★' },
+] as const;
+
 
 const accents = {
   en: {
@@ -224,6 +267,39 @@ export default function LanguagesHome() {
             })}
           </View>
 
+          {/* ۱+۲: نوار آمار + گرید مزایا — پر کردن فضای خالی به سبک بین‌المللی */}
+          <View style={[styles.statsStrip, compact && styles.statsStripCompact]}>
+            {STATS.map((s, i) => (
+              <View key={s.label} style={styles.statPill}>
+                <Text style={styles.statValue}>{s.value()}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+                {i < STATS.length - 1 && <View style={styles.statDivider} />}
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.benefitsSection}>
+            <View style={styles.benefitsHeader}>
+              <View style={styles.benefitsEyebrowRow}><Award size={13} color={violet} /><Text style={styles.benefitsEyebrow}>WHY LEARNERS LOVE US</Text></View>
+              <Text style={styles.benefitsTitle}>چرا زبان‌آموزان ما می‌مانند؟</Text>
+              <Text style={styles.benefitsSubtitle}>طراحی شده برای عادت روزانه — نه حفظ طوطی‌وار</Text>
+            </View>
+            <View style={[styles.benefitsGrid, compact && styles.benefitsGridCompact]}>
+              {BENEFITS.map(b => {
+                const Icon = b.icon;
+                return (
+                  <View key={b.id} style={[styles.benefitCard, compact && styles.benefitCardCompact]}>
+                    <View style={[styles.benefitIcon, { backgroundColor: b.soft }]}><Icon size={18} color={b.ink} /></View>
+                    <View style={styles.benefitCopy}>
+                      <Text style={styles.benefitTitle}>{b.title}</Text>
+                      <Text style={styles.benefitDesc}>{b.desc}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+
           <View style={[styles.reassurance, compact && styles.reassuranceCompact]}>
             <View style={styles.shield}><ShieldCheck size={20} color="#527745" /></View>
             <View style={styles.reassuranceCopy}>
@@ -308,10 +384,36 @@ export default function LanguagesHome() {
             )}
           </View>
 
-          <View style={styles.footer}>
-            <View style={styles.footerLine} />
-            <Text style={styles.footerText}>با قدم‌های کوچک، هر روز کمی جلوتر.</Text>
-            <Sparkles size={14} color="#A89BD0" />
+          <View style={styles.footerExtended}>
+            <View style={styles.footerTop}>
+              <View style={styles.footerBrandRow}>
+                <View style={styles.footerBrandLeft}>
+                  <LinearGradient colors={['#9B78F0', '#5E42C5']} style={styles.footerLogoMini}>
+                    <Globe2 size={16} color="#FFFFFF" strokeWidth={1.8} />
+                  </LinearGradient>
+                  <View>
+                    <Text style={styles.footerBrandText}>Language Journey</Text>
+                    <Text style={styles.footerVersion}>نسخه ۱.۰ • xhdpi بهینه</Text>
+                  </View>
+                </View>
+                <View style={styles.footerBadge}>
+                  <View style={styles.footerBadgeDot} />
+                  <Text style={styles.footerBadgeText}>همه‌چیز آفلاین هم می‌ماند</Text>
+                </View>
+              </View>
+              <View style={styles.footerLinks}>
+                <Text style={styles.footerLink}>حریم خصوصی</Text>
+                <View style={styles.footerLinkDot} />
+                <Text style={styles.footerLink}>پشتیبانی</Text>
+                <View style={styles.footerLinkDot} />
+                <Text style={styles.footerLink}>درباره ما</Text>
+              </View>
+            </View>
+            <View style={styles.footerBottom}>
+              <View style={styles.footerLine} />
+              <Text style={styles.footerText}>با قدم‌های کوچک، هر روز کمی جلوتر — طراحی شده برای ۳۶۰×۸۰۰</Text>
+              <BarChart3 size={14} color="#A89BD0" />
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -452,4 +554,40 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, paddingBottom: 16 },
   footerLine: { width: 24, height: 1, backgroundColor: '#D3CBDD' },
   footerText: { fontFamily: 'Vazirmatn', color: '#9990A7', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  // --- New: StatsStrip + Benefits + Extended Footer (1+2+3) to fill 360x800 without white gap ---
+  statsStrip: { flexDirection: 'row-reverse', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 18, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECE7F3', shadowColor: '#32284E', shadowOpacity: .04, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
+  statsStripCompact: { gap: 6, paddingHorizontal: 8 },
+  statPill: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  statValue: { fontFamily: 'Vazirmatn', color: ink, fontSize: 11, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  statLabel: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  statDivider: { width: 1, height: 12, backgroundColor: '#E9E2F3', marginHorizontal: 4 },
+  benefitsSection: { marginTop: 20, gap: 12 },
+  benefitsHeader: { alignItems: 'flex-end', gap: 4 },
+  benefitsEyebrowRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 5 },
+  benefitsEyebrow: { color: '#897BAA', fontSize: 8, fontWeight: '900', letterSpacing: 1.25, textAlign: 'right', writingDirection: 'ltr' },
+  benefitsTitle: { fontFamily: 'Vazirmatn', color: ink, fontSize: 18, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  benefitsSubtitle: { fontFamily: 'Vazirmatn', color: muted, fontSize: 10, textAlign: 'right', writingDirection: 'rtl' },
+  benefitsGrid: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 12 },
+  benefitsGridCompact: { flexDirection: 'column', gap: 10 },
+  benefitCard: { flexBasis: '48%', flexGrow: 1, flexShrink: 1, minWidth: 140, flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10, padding: 14, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECE7F3', shadowColor: '#32284E', shadowOpacity: .05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
+  benefitCardCompact: { flexBasis: 'auto', width: '100%', minWidth: 0 },
+  benefitIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  benefitCopy: { flex: 1, gap: 3, alignItems: 'flex-end' },
+  benefitTitle: { fontFamily: 'Vazirmatn', color: ink, fontSize: 11, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  benefitDesc: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, lineHeight: 16, textAlign: 'right', writingDirection: 'rtl' },
+  footerExtended: { marginTop: 22, paddingTop: 16, paddingBottom: 8, borderTopWidth: 1, borderTopColor: '#E7E1ED', gap: 12, backgroundColor: 'transparent' },
+  footerTop: { gap: 12 },
+  footerBrandRow: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  footerBrandLeft: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  footerLogoMini: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  footerBrandText: { color: ink, fontSize: 13, fontWeight: '800', textAlign: 'right', writingDirection: 'ltr' },
+  footerVersion: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, textAlign: 'right', writingDirection: 'rtl', marginTop: 1 },
+  footerBadge: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECE7F3' },
+  footerBadgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#81A869' },
+  footerBadgeText: { fontFamily: 'Vazirmatn', color: '#695C84', fontSize: 9, fontWeight: '600', textAlign: 'right', writingDirection: 'rtl' },
+  footerLinks: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' },
+  footerLink: { fontFamily: 'Vazirmatn', color: muted, fontSize: 10, textAlign: 'right', writingDirection: 'rtl' },
+  footerLinkDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: '#D3CBDD' },
+  footerBottom: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 4 },
+
 });
