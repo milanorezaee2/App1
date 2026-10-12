@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-// Preview server that correctly handles Expo baseUrl (/App1) for Arena preview.
-// Serves dist/ with rewrite: /App1/* -> dist/* and also handles SPA HTML extensions.
-// Binds to 0.0.0.0 and allows any host/origin (required for e2b.app preview).
-// Injects mobile frame (390x844) for desktop preview as requested.
-
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -27,20 +22,14 @@ function contentType(p) {
   return 'application/octet-stream';
 }
 
-// Mobile frame CSS injected into every HTML for desktop preview
-// - On desktop (>=520px) shows 390x844 phone frame centered with notch & shadow
-// - On real mobile (<520px) full-screen without frame
-// Includes toggle button to switch frame on/off
-// Also patches window.innerWidth/innerHeight so useWindowDimensions sees mobile size (390)
 const MOBILE_FRAME_INJECTION = `
 <script id="arena-dimensions-patch">
-// Early patch: make React Native's useWindowDimensions report 390x844 on desktop when frame is enabled
-// react-native-web Dimensions uses visualViewport if available else documentElement.clientWidth, so patch all.
 try {
   (function(){
     var FRAME_W=390, FRAME_H=844, BP=520;
     var html=document.documentElement;
     try { if(localStorage.getItem('arena-mobile-frame-disabled')==='1') html.classList.add('arena-frame-disabled'); } catch(e){}
+    try { if(localStorage.getItem('arena-keep-desktop')==='1') html.classList.add('arena-keep-desktop'); } catch(e){}
     var winProto=Object.getPrototypeOf(window);
     var origWDesc=Object.getOwnPropertyDescriptor(winProto,'innerWidth');
     var origHDesc=Object.getOwnPropertyDescriptor(winProto,'innerHeight');
@@ -50,15 +39,14 @@ try {
     var getRealH=function(){ try{ return origHGet?origHGet.call(window):window.outerHeight; }catch{ return 800;} };
     try {
       Object.defineProperty(window,'innerWidth',{
-        get:function(){ var real=getRealW(); if(!html.classList.contains('arena-frame-disabled') && real>=BP) return FRAME_W; return real; },
+        get:function(){ var real=getRealW(); var keepDesktop=html.classList.contains('arena-keep-desktop'); if(!html.classList.contains('arena-frame-disabled') && !keepDesktop && real>=BP) return FRAME_W; return real; },
         configurable:true
       });
       Object.defineProperty(window,'innerHeight',{
-        get:function(){ var real=getRealH(); if(!html.classList.contains('arena-frame-disabled') && real>=BP) return FRAME_H; return real; },
+        get:function(){ var real=getRealH(); var keepDesktop=html.classList.contains('arena-keep-desktop'); if(!html.classList.contains('arena-frame-disabled') && !keepDesktop && real>=BP) return FRAME_H; return real; },
         configurable:true
       });
     } catch(e){}
-    // Patch documentElement.clientWidth/Height
     try {
       var elProto=Element.prototype;
       var origCWDesc=Object.getOwnPropertyDescriptor(elProto,'clientWidth');
@@ -71,7 +59,8 @@ try {
             if(this===document.documentElement){
               var real=origCWGet.call(this);
               var realWinW=getRealW();
-              if(!html.classList.contains('arena-frame-disabled') && realWinW>=BP) return FRAME_W;
+              var keepDesktop=html.classList.contains('arena-keep-desktop');
+              if(!html.classList.contains('arena-frame-disabled') && !keepDesktop && realWinW>=BP) return FRAME_W;
               return real;
             }
             return origCWGet.call(this);
@@ -85,7 +74,8 @@ try {
             if(this===document.documentElement){
               var real=origCHGet.call(this);
               var realWinW=getRealW();
-              if(!html.classList.contains('arena-frame-disabled') && realWinW>=BP) return FRAME_H;
+              var keepDesktop=html.classList.contains('arena-keep-desktop');
+              if(!html.classList.contains('arena-frame-disabled') && !keepDesktop && realWinW>=BP) return FRAME_H;
               return real;
             }
             return origCHGet.call(this);
@@ -94,7 +84,6 @@ try {
         });
       }
     } catch(e){}
-    // Patch visualViewport to return null when frame enabled (forces Dimensions to use clientWidth fallback)
     try {
       var realVP=window.visualViewport;
       var vpDesc=Object.getOwnPropertyDescriptor(window,'visualViewport')||Object.getOwnPropertyDescriptor(winProto,'visualViewport');
@@ -102,7 +91,8 @@ try {
       if(vpGet){
         Object.defineProperty(window,'visualViewport',{
           get:function(){
-            if(!html.classList.contains('arena-frame-disabled') && getRealW()>=BP) return null;
+            var keepDesktop=html.classList.contains('arena-keep-desktop');
+            if(!html.classList.contains('arena-frame-disabled') && !keepDesktop && getRealW()>=BP) return null;
             return vpGet.call(window);
           },
           configurable:true
@@ -110,7 +100,8 @@ try {
       } else if(realVP!==undefined){
         Object.defineProperty(window,'visualViewport',{
           get:function(){
-            if(!html.classList.contains('arena-frame-disabled') && getRealW()>=BP) return null;
+            var keepDesktop2=html.classList.contains('arena-keep-desktop');
+            if(!html.classList.contains('arena-frame-disabled') && !keepDesktop2 && getRealW()>=BP) return null;
             return realVP;
           },
           set:function(v){ realVP=v; },
@@ -122,27 +113,27 @@ try {
       var dispatchResize=function(){ try{ window.dispatchEvent(new Event('resize')); }catch(e){} };
       var p=DOMTokenList.prototype;
       var oToggle=p.toggle, oAdd=p.add, oRemove=p.remove;
-      p.toggle=function(token,force){ var r=oToggle.call(this,token,force); if(token==='arena-frame-disabled') setTimeout(dispatchResize,0); return r; };
-      p.add=function(){ var r=oAdd.apply(this,arguments); if([].slice.call(arguments).indexOf('arena-frame-disabled')!==-1) setTimeout(dispatchResize,0); return r; };
-      p.remove=function(){ var r=oRemove.apply(this,arguments); if([].slice.call(arguments).indexOf('arena-frame-disabled')!==-1) setTimeout(dispatchResize,0); return r; };
-      // Also trigger on resize
+      p.toggle=function(token,force){ var r=oToggle.call(this,token,force); if(token==='arena-frame-disabled' || token==='arena-keep-desktop') setTimeout(dispatchResize,0); return r; };
+      p.add=function(){ var r=oAdd.apply(this,arguments); if([].slice.call(arguments).indexOf('arena-frame-disabled')!==-1 || [].slice.call(arguments).indexOf('arena-keep-desktop')!==-1) setTimeout(dispatchResize,0); return r; };
+      p.remove=function(){ var r=oRemove.apply(this,arguments); if([].slice.call(arguments).indexOf('arena-frame-disabled')!==-1 || [].slice.call(arguments).indexOf('arena-keep-desktop')!==-1) setTimeout(dispatchResize,0); return r; };
       setTimeout(dispatchResize,50);
     } catch(e){}
   })();
 } catch(e){}
 </script>
 <style id="arena-mobile-frame">
-  /* --- Mobile resolution emulation for Arena web preview --- */
+  /* Polished mobile frame like international language apps */
   @media (min-width: 520px) {
     html:not(.arena-frame-disabled), body:not(.arena-frame-disabled) {
-      background: #0f172a !important;
-      background-color: #0f172a !important;
+      background: #eef2f7 !important;
+      background-color: #eef2f7 !important;
+      background-image: radial-gradient(circle at 20% 20%, rgba(99,102,241,0.06) 0%, transparent 50%), radial-gradient(circle at 90% 80%, rgba(14,165,233,0.05) 0%, transparent 50%) !important;
       display: flex !important;
       justify-content: center !important;
       align-items: flex-start !important;
       min-height: 100vh !important;
       margin: 0 !important;
-      padding: 18px 0 60px 0 !important;
+      padding: 28px 0 56px 0 !important;
       overflow-y: auto !important;
     }
     html:not(.arena-frame-disabled) #root,
@@ -153,49 +144,68 @@ try {
       max-height: 844px !important;
       min-height: 844px !important;
       flex: none !important;
-      border-radius: 32px !important;
+      border-radius: 48px !important;
       overflow: hidden !important;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6), 0 0 0 8px #1e293b, 0 0 0 9px #334155 !important;
+      background: #ffffff !important;
       position: relative !important;
-      background: #f6f8fb !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-shadow: 0 32px 80px -16px rgba(15,23,42,0.18), 0 12px 32px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.06), 0 0 0 12px #ffffff !important;
+      border: 1px solid rgba(15,23,42,0.04) !important;
     }
-    /* Notch / Dynamic Island */
     html:not(.arena-frame-disabled) #root::before {
       content: '';
       position: absolute;
-      top: 8px;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
-      width: 92px;
-      height: 26px;
+      width: 90px;
+      height: 28px;
       background: #0f172a;
       border-radius: 9999px;
       z-index: 9999;
       pointer-events: none;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.15);
     }
-    /* Badge */
-    html:not(.arena-frame-disabled) body::after {
-      content: '📱 390 × 844 — نمایش موبایل';
-      position: fixed;
-      bottom: 14px;
+    html:not(.arena-frame-disabled) #root::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15,23,42,0.92);
-      color: #e2e8f0;
+      width: 132px;
+      height: 5px;
+      background: #0f172a;
+      border-radius: 9999px;
+      opacity: 0.85;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    html:not(.arena-frame-disabled) body::after {
+      content: 'پیش‌نمایش موبایل • 390 × 844';
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      color: #64748b;
       font-family: Vazirmatn, system-ui, sans-serif;
-      font-size: 12px;
-      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+      padding: 7px 16px;
       border-radius: 9999px;
       z-index: 10000;
       pointer-events: none;
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.08);
       direction: rtl;
     }
   }
   @media (max-width: 519px) {
     html, body {
-      background: #f6f8fb !important;
+      background: #ffffff !important;
+      background-image: none !important;
       padding: 0 !important;
       margin: 0 !important;
     }
@@ -205,25 +215,26 @@ try {
       min-height: 100vh !important;
       border-radius: 0 !important;
       box-shadow: none !important;
+      border: none !important;
     }
+    #root::before, #root::after { display: none !important; }
   }
-  /* Toggle button - always visible on desktop */
   @media (min-width: 520px) {
     #arena-frame-toggle {
       position: fixed;
-      top: 12px;
-      left: 12px;
+      top: 16px;
+      left: 16px;
       z-index: 10001;
-      background: rgba(255,255,255,0.96);
-      color: #0f172a;
+      background: #ffffff;
+      color: #334155;
       border: 1px solid #e2e8f0;
       border-radius: 9999px;
-      padding: 7px 14px;
+      padding: 8px 16px;
       font-family: Vazirmatn, system-ui, sans-serif;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      box-shadow: 0 4px 16px rgba(15,23,42,0.08);
       direction: rtl;
       display: flex;
       align-items: center;
@@ -231,16 +242,18 @@ try {
       transition: all 0.2s;
     }
     #arena-frame-toggle:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+      box-shadow: 0 6px 20px rgba(15,23,42,0.12);
     }
   }
   @media (max-width: 519px) {
     #arena-frame-toggle { display: none !important; }
   }
-  /* When frame disabled, reset to full width even on desktop */
   html.arena-frame-disabled, html.arena-frame-disabled body {
-    background: #f6f8fb !important;
+    background: #ffffff !important;
+    background-image: none !important;
     display: block !important;
     padding: 0 !important;
   }
@@ -252,9 +265,50 @@ try {
     max-height: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    border: none !important;
   }
-  html.arena-frame-disabled #root::before { display: none !important; }
+  html.arena-frame-disabled #root::before,
+  html.arena-frame-disabled #root::after,
   html.arena-frame-disabled body::after { display: none !important; }
+  /* Keep-desktop mode: preserve original desktop layout scaled to fit 390 */
+  @media (min-width: 520px) {
+    html.arena-keep-desktop:not(.arena-frame-disabled) #root > div {
+      zoom: 0.58 !important;
+      width: 672px !important;
+      max-width: 672px !important;
+      transform-origin: top center !important;
+    }
+    #arena-keep-desktop-toggle {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10001;
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-family: Vazirmatn, system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.08);
+      direction: rtl;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    #arena-keep-desktop-toggle:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+  }
+  @media (max-width: 519px) {
+    #arena-keep-desktop-toggle { display: none !important; }
+  }
+  html.arena-frame-disabled #arena-keep-desktop-toggle { display: none !important; }
 </style>
 <script id="arena-mobile-viewport-hint">
   try {
@@ -266,12 +320,14 @@ try {
     }
     m.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
   } catch(e) {}
-  // Frame toggle logic
   (function() {
     try {
       var KEY = 'arena-mobile-frame-disabled';
       var isDisabled = localStorage.getItem(KEY) === '1';
       if (isDisabled) document.documentElement.classList.add('arena-frame-disabled');
+      var KEY2 = 'arena-keep-desktop';
+      var keepDesktop = localStorage.getItem(KEY2) === '1';
+      if (keepDesktop) document.documentElement.classList.add('arena-keep-desktop');
       document.addEventListener('DOMContentLoaded', function() {
         var btn = document.createElement('button');
         btn.id = 'arena-frame-toggle';
@@ -288,6 +344,26 @@ try {
         });
         updateLabel();
         document.body.appendChild(btn);
+        // Second toggle for keep-desktop
+        if (!document.getElementById('arena-keep-desktop-toggle')) {
+          var btn2 = document.createElement('button');
+          btn2.id = 'arena-keep-desktop-toggle';
+          function upd2(){
+            var k=document.documentElement.classList.contains('arena-keep-desktop');
+            btn2.textContent=k?'✨ حالت بهینه موبایل':'🖼️ حفظ چیدمان اصلی';
+            btn2.title=k?'حالت اصلی (بدون تغییر) فعال - کلیک برای بهینه موبایل':'حالت بهینه موبایل فعال - کلیک برای حفظ چیدمان اصلی';
+          }
+          btn2.addEventListener('click', function(){
+            var h=document.documentElement;
+            var now=!h.classList.contains('arena-keep-desktop');
+            if(now) h.classList.add('arena-keep-desktop'); else h.classList.remove('arena-keep-desktop');
+            localStorage.setItem(KEY2, now?'1':'0');
+            upd2();
+            setTimeout(function(){ try{ location.reload(); }catch(e){} },120);
+          });
+          upd2();
+          document.body.appendChild(btn2);
+        }
       });
     } catch(e) {}
   })();
@@ -303,39 +379,22 @@ function injectMobileFrame(html) {
 }
 
 const server = http.createServer((req, res) => {
-  // CORS + iframe embedding allowed
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, expo-platform');
-  // Allow embedding in iframe for Arena preview
   res.removeHeader('X-Frame-Options');
   res.setHeader('Content-Security-Policy', "frame-ancestors *");
-  
-  if (req.method === 'OPTIONS') {
-    res.statusCode = 200;
-    res.end();
-    return;
-  }
-
+  if (req.method === 'OPTIONS') { res.statusCode = 200; res.end(); return; }
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     let pathname = decodeURIComponent(url.pathname);
-
-    // Strip baseUrl prefix if present (/App1/... -> /...), also handle /App1 without slash
     if (pathname === baseUrl) pathname = '/';
     else if (pathname.startsWith(baseUrl + '/')) pathname = pathname.slice(baseUrl.length);
-
-    // Security: prevent directory traversal
     pathname = pathname.replace(/\0/g, '');
-
-    // Normalize
     let filePath = path.join(dist, pathname);
-
-    // Resolve file
     let resolved = null;
     let stat = null;
     try { stat = fs.statSync(filePath); } catch {}
-
     if (stat && stat.isDirectory()) {
       const index = path.join(filePath, 'index.html');
       if (fs.existsSync(index)) resolved = index;
@@ -349,7 +408,6 @@ const server = http.createServer((req, res) => {
         if (fs.existsSync(indexInFolder)) resolved = indexInFolder;
       }
     }
-
     if (!resolved) {
       const notFound = path.join(dist, '+not-found.html');
       if (fs.existsSync(notFound)) {
@@ -364,18 +422,9 @@ const server = http.createServer((req, res) => {
       res.end('Not Found');
       return;
     }
-
-    // Security check: resolved must be inside dist
-    if (!resolved.startsWith(dist)) {
-      res.statusCode = 403;
-      res.end('Forbidden');
-      return;
-    }
-
+    if (!resolved.startsWith(dist)) { res.statusCode = 403; res.end('Forbidden'); return; }
     const isHtml = resolved.endsWith('.html');
-
     if (isHtml) {
-      // Read and inject mobile frame
       let html = fs.readFileSync(resolved, 'utf8');
       html = injectMobileFrame(html);
       res.statusCode = 200;
@@ -384,20 +433,12 @@ const server = http.createServer((req, res) => {
       res.end(html);
       return;
     }
-
-    // Non-HTML static asset
     const stream = fs.createReadStream(resolved);
     res.statusCode = 200;
     res.setHeader('Content-Type', contentType(resolved));
-    if (resolved.includes('/_expo/')) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    } else {
-      res.setHeader('Cache-Control', 'public, max-age=0');
-    }
-    stream.on('error', () => {
-      res.statusCode = 500;
-      res.end('Internal Server Error');
-    });
+    if (resolved.includes('/_expo/')) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    else res.setHeader('Cache-Control', 'public, max-age=0');
+    stream.on('error', () => { res.statusCode = 500; res.end('Internal Server Error'); });
     stream.pipe(res);
   } catch (e) {
     res.statusCode = 500;
@@ -406,5 +447,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`Preview server running at http://0.0.0.0:${port} serving ${dist} with baseUrl ${baseUrl} (also /) + mobile frame 390x844`);
+  console.log(`Preview server running at http://0.0.0.0:${port} serving ${dist} with baseUrl ${baseUrl} (also /) + mobile frame 390x844 polished`);
 });
