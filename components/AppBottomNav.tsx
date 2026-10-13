@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   shell: {
     minHeight: 68,
     marginHorizontal: 14,
-    marginBottom: 8,
+    marginBottom: 38,
     paddingTop: 7,
     paddingBottom: 9,
     paddingHorizontal: 12,
@@ -63,6 +63,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapActive: { backgroundColor: Palette.primarySoft },
-  label: { fontFamily: Typography.fontFamily, fontSize: 10, color: Palette.muted },
+  label: { fontFamily: Typography.fontFamily, fontSize: 12, color: Palette.muted },
   labelActive: { color: Palette.primaryDark, fontWeight: Typography.weights.bold },
 });
