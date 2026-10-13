@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - arena/b2da2695-app1
+      - arena/5fd5cd5d-app1
 
 permissions:
   contents: write

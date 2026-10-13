@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BookOpen, ChevronDown, ChevronLeft, Cloud, Globe2, Headphones, Layers3, ShieldCheck, Sparkles, Star } from 'lucide-react-native';
+import { Award, BarChart3, BookOpen, ChevronDown, ChevronLeft, Clock, Cloud, Globe2, Headphones, Layers3, Mic, RefreshCw, ShieldCheck, Sparkles, Star, TrendingUp } from 'lucide-react-native';
 import { LANGUAGES } from '@/lib/languages/catalog';
 import { FEATURES } from '@/lib/features';
 import { COURSE_LEVELS, SENTENCE_LESSONS, type CourseLevelId } from '@/lib/courseContent';
@@ -43,6 +43,49 @@ const germanLevelSummaries = ([
 ] as const).map(level => ({ ...level, ...germanSentenceLevelMetrics(level.id) }));
 const totalGermanSentences = GERMAN_SENTENCE_LESSONS.reduce((count, lesson) => count + lesson.sentences.length, 0);
 
+const BENEFITS = [
+  {
+    id: 'daily',
+    title: '۵ دقیقه در روز',
+    desc: 'درس‌های کوتاه و متمرکز — بدون فشار، هر روز یک قدم',
+    icon: Clock,
+    soft: '#F0EAFE',
+    ink: '#704FD2',
+  },
+  {
+    id: 'voice',
+    title: 'تلفظ هوشمند',
+    desc: 'تحلیل صدا و بازخورد فوری برای لهجه بهتر',
+    icon: Mic,
+    soft: '#E6F5EF',
+    ink: '#197D70',
+  },
+  {
+    id: 'progress',
+    title: 'پیشرفت قابل مشاهده',
+    desc: 'نمودار هفتگی، استریک و یادآور هوشمند',
+    icon: TrendingUp,
+    soft: '#FEF3E2',
+    ink: '#B45309',
+  },
+  {
+    id: 'sync',
+    title: 'همگام بین دستگاه‌ها',
+    desc: 'با ورود ایمیلی، همه‌چیز امن ذخیره می‌شود',
+    icon: RefreshCw,
+    soft: '#EBF0FA',
+    ink: '#4267A8',
+  },
+] as const;
+
+const STATS = [
+  { label: 'مسیر فعال', value: () => `${fa(activeLanguages.length)} مسیر` },
+  { label: 'درس', value: () => `${fa(totalEnglishLessons + GERMAN_SENTENCE_LESSONS.length)} درس` },
+  { label: 'جمله', value: () => `${fa(totalEnglishSentences + totalGermanSentences)} جمله` },
+  { label: 'رضایت', value: () => '۴.۸ ★' },
+] as const;
+
+
 const accents = {
   en: {
     ink: '#704FD2', soft: '#F0EAFE', line: '#E1D8FA', gradient: ['#3A216E', '#7753D6', '#A77BE8'],
@@ -80,15 +123,21 @@ export default function LanguagesHome() {
   const [details, setDetails] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
+  const [contentH, setContentH] = useState(0);
 
   useEffect(() => setHydrated(true), []);
-  const compact = !hydrated || width < 760;
-  const tiny = !hydrated || width < 380;
+  // کاربر می‌خواهد گوشی دقیقاً مثل عکس اول وب (حفظ چیدمان اصلی اسکیل‌شده) باشد
+  // روی گوشی واقعی 360dp، حالت بهینه ستونی بود و محتوا کامل عوض می‌شد — اینجا فیکس می‌کنیم
+  const FORCE_DESKTOP_SCALED_ON_NATIVE = true;
+  const compact = FORCE_DESKTOP_SCALED_ON_NATIVE && Platform.OS !== 'web' ? false : (!hydrated || width < 760);
+  const tiny = FORCE_DESKTOP_SCALED_ON_NATIVE && Platform.OS !== 'web' ? false : (!hydrated || width < 380);
+  const scale = FORCE_DESKTOP_SCALED_ON_NATIVE && Platform.OS !== 'web' && width < 1120 && width > 0 ? width / 1120 : 1;
+  const contentScaleStyle = scale !== 1 ? ({ width: 1120, transform: [{ scale }] as any, transformOrigin: 'top center' as any, alignSelf: 'center' as any, marginBottom: contentH ? -contentH * (1 - scale) : 0 } as any) : null;
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={[styles.page, compact && styles.pageCompact]} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
+      <ScrollView contentContainerStyle={[styles.page, compact && styles.pageCompact, scale !== 1 && { alignItems: 'center' }]} showsVerticalScrollIndicator={false}>
+        <View style={[styles.content, contentScaleStyle]} onLayout={e => { if (scale !== 1) setContentH(e.nativeEvent.layout.height); }}>
           <View style={[styles.header, tiny && styles.headerTiny]}>
             <View style={styles.brandRow}>
               <LinearGradient colors={['#9B78F0', '#5E42C5']} style={styles.logo}>
@@ -224,6 +273,39 @@ export default function LanguagesHome() {
             })}
           </View>
 
+          {/* ۱+۲: نوار آمار + گرید مزایا — پر کردن فضای خالی به سبک بین‌المللی */}
+          <View style={[styles.statsStrip, compact && styles.statsStripCompact]}>
+            {STATS.map((s, i) => (
+              <View key={s.label} style={styles.statPill}>
+                <Text style={styles.statValue}>{s.value()}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+                {i < STATS.length - 1 && <View style={styles.statDivider} />}
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.benefitsSection}>
+            <View style={styles.benefitsHeader}>
+              <View style={styles.benefitsEyebrowRow}><Award size={13} color={violet} /><Text style={styles.benefitsEyebrow}>WHY LEARNERS LOVE US</Text></View>
+              <Text style={styles.benefitsTitle}>چرا زبان‌آموزان ما می‌مانند؟</Text>
+              <Text style={styles.benefitsSubtitle}>طراحی شده برای عادت روزانه — نه حفظ طوطی‌وار</Text>
+            </View>
+            <View style={[styles.benefitsGrid, compact && styles.benefitsGridCompact]}>
+              {BENEFITS.map(b => {
+                const Icon = b.icon;
+                return (
+                  <View key={b.id} style={[styles.benefitCard, compact && styles.benefitCardCompact]}>
+                    <View style={[styles.benefitIcon, { backgroundColor: b.soft }]}><Icon size={18} color={b.ink} /></View>
+                    <View style={styles.benefitCopy}>
+                      <Text style={styles.benefitTitle}>{b.title}</Text>
+                      <Text style={styles.benefitDesc}>{b.desc}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+
           <View style={[styles.reassurance, compact && styles.reassuranceCompact]}>
             <View style={styles.shield}><ShieldCheck size={20} color="#527745" /></View>
             <View style={styles.reassuranceCopy}>
@@ -308,10 +390,92 @@ export default function LanguagesHome() {
             )}
           </View>
 
-          <View style={styles.footer}>
-            <View style={styles.footerLine} />
-            <Text style={styles.footerText}>با قدم‌های کوچک، هر روز کمی جلوتر.</Text>
-            <Sparkles size={14} color="#A89BD0" />
+          {/* فانتزی جذاب — پر کردن گپ سفید پایانی با محتوای تصویری */}
+          <LinearGradient
+            colors={['#1E0F3A', '#3B1E6B', '#6D3BD9', '#9A6CFF']}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
+            style={[styles.fantasyCard, compact && styles.fantasyCardCompact]}
+          >
+            <View pointerEvents="none" style={styles.fantasyGlowA} />
+            <View pointerEvents="none" style={styles.fantasyGlowB} />
+            <View pointerEvents="none" style={styles.fantasyStarsTop}><Sparkles size={16} color="#FFEBA9" fill="#FFEBA9" /></View>
+            <View pointerEvents="none" style={styles.fantasyStarsBottom}><Star size={14} color="#C6F4E5" fill="#C6F4E5" /></View>
+
+            <View style={[styles.fantasyInner, compact && styles.fantasyInnerCompact]}>
+              <View style={[styles.fantasyArtWrap, compact && styles.fantasyArtWrapCompact]}>
+                <View style={styles.fantasyOrbit} />
+                <Image
+                  source={require('../assets/language-learning-hero.jpg')}
+                  resizeMode="cover"
+                  style={[styles.fantasyImage, compact && styles.fantasyImageCompact]}
+                />
+                <View style={styles.fantasyBookBadge}>
+                  <BookOpen size={14} color="#FFFFFF" />
+                  <Text style={styles.fantasyBookText}>کتاب جادویی</Text>
+                </View>
+              </View>
+
+              <View style={[styles.fantasyCopy, compact && styles.fantasyCopyCompact]}>
+                <View style={styles.fantasyEyebrow}>
+                  <Sparkles size={12} color="#FFE19A" />
+                  <Text style={styles.fantasyEyebrowText}>داستان تو اینجاست</Text>
+                  <View style={styles.fantasyEyebrowDot} />
+                </View>
+                <Text style={[styles.fantasyTitle, compact && styles.fantasyTitleCompact]}>
+                  هر کلمه،{"\n"}<Text style={styles.fantasyTitleAccent}>یک کلید جادویی</Text>
+                </Text>
+                <Text style={styles.fantasyDesc}>
+                  کتاب رو باز کن، عبارت‌ها مثل ستاره می‌درخشند. با هر جمله، دنیای جدیدی باز می‌شود — از سلام اول تا گفت‌وگوی روان.
+                </Text>
+                <View style={styles.fantasyPoints}>
+                  <View style={styles.fantasyPoint}><View style={styles.fantasyPointDot} /><Text style={styles.fantasyPointText}>قصه‌های تصویری با صدا</Text></View>
+                  <View style={styles.fantasyPoint}><View style={[styles.fantasyPointDot, { backgroundColor: '#9FE5CD' }]} /><Text style={styles.fantasyPointText}>مرور جادویی با تکرار هوشمند</Text></View>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="شروع ماجراجویی فانتزی"
+                  onPress={() => router.push(activeLanguages[0]?.home as never)}
+                  style={({ pressed }) => [styles.fantasyCTA, pressed && styles.cardPressed]}
+                >
+                  <Text style={styles.fantasyCTAText}>شروع ماجراجویی ✨</Text>
+                  <View style={styles.fantasyCTAIcon}><ChevronLeft size={18} color="#5E42C5" /></View>
+                </Pressable>
+                <Text style={styles.fantasyFootnote}>بدون تبلیغ • مناسب همه سنین • هر روز ۵ دقیقه</Text>
+              </View>
+            </View>
+          </LinearGradient>
+
+          <View style={styles.footerExtended}>
+            <View style={styles.footerTop}>
+              <View style={styles.footerBrandRow}>
+                <View style={styles.footerBrandLeft}>
+                  <LinearGradient colors={['#9B78F0', '#5E42C5']} style={styles.footerLogoMini}>
+                    <Globe2 size={16} color="#FFFFFF" strokeWidth={1.8} />
+                  </LinearGradient>
+                  <View>
+                    <Text style={styles.footerBrandText}>Language Journey</Text>
+                    <Text style={styles.footerVersion}>نسخه ۱.۰ • xhdpi بهینه</Text>
+                  </View>
+                </View>
+                <View style={styles.footerBadge}>
+                  <View style={styles.footerBadgeDot} />
+                  <Text style={styles.footerBadgeText}>همه‌چیز آفلاین هم می‌ماند</Text>
+                </View>
+              </View>
+              <View style={styles.footerLinks}>
+                <Text style={styles.footerLink}>حریم خصوصی</Text>
+                <View style={styles.footerLinkDot} />
+                <Text style={styles.footerLink}>پشتیبانی</Text>
+                <View style={styles.footerLinkDot} />
+                <Text style={styles.footerLink}>درباره ما</Text>
+              </View>
+            </View>
+            <View style={styles.footerBottom}>
+              <View style={styles.footerLine} />
+              <Text style={styles.footerText}>با قدم‌های کوچک، هر روز کمی جلوتر — طراحی شده برای ۳۶۰×۸۰۰</Text>
+              <BarChart3 size={14} color="#A89BD0" />
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -321,8 +485,8 @@ export default function LanguagesHome() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8F6FB' },
-  page: { flexGrow: 1, paddingHorizontal: 40, paddingTop: 24, paddingBottom: 36 },
-  pageCompact: { paddingHorizontal: 18, paddingTop: 16 },
+  page: { flexGrow: 1, paddingHorizontal: 40, paddingTop: 54, paddingBottom: 66 },
+  pageCompact: { paddingHorizontal: 18, paddingTop: 46 },
   content: { width: '100%', maxWidth: 1120, alignSelf: 'center' },
   header: { minHeight: 55, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 26 },
   headerTiny: { alignItems: 'stretch', flexDirection: 'column', gap: 8 },
@@ -330,12 +494,12 @@ const styles = StyleSheet.create({
   logo: { width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   logoSpark: { position: 'absolute', right: -3, top: -3, width: 17, height: 17, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: '#423478' },
   brandCopy: { alignItems: 'flex-end' },
-  brand: { color: ink, fontSize: 18, fontWeight: '800', letterSpacing: -.5, textAlign: 'right', writingDirection: 'ltr' },
-  brandTiny: { fontSize: 15 },
-  brandCaption: { fontFamily: 'Vazirmatn', color: muted, fontSize: 10, marginTop: 2, textAlign: 'right', writingDirection: 'rtl' },
+  brand: { color: ink, fontSize: 20, fontWeight: '800', letterSpacing: -.5, textAlign: 'right', writingDirection: 'ltr' },
+  brandTiny: { fontSize: 17 },
+  brandCaption: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 12, marginTop: 2, textAlign: 'right', writingDirection: 'rtl' },
   headerTag: { flexDirection: 'row-reverse', alignItems: 'center', gap: 7, paddingHorizontal: 11, paddingVertical: 8, borderRadius: 24, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECE7F3' },
   headerTagTiny: { alignSelf: 'flex-end', paddingHorizontal: 9, paddingVertical: 6 },
-  headerTagText: { fontFamily: 'Vazirmatn', color: '#695C84', fontSize: 10, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  headerTagText: { fontFamily: 'Vazirmatn-Bold', color: '#695C84', fontSize: 12, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#81A869' },
   hero: { position: 'relative', minHeight: 330, overflow: 'hidden', borderRadius: 30, borderWidth: 1, borderColor: '#514382', paddingHorizontal: 34, paddingVertical: 27, flexDirection: 'row-reverse', alignItems: 'center', gap: 16, shadowColor: '#231752', shadowOpacity: .18, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 6 },
   heroCompact: { minHeight: 0, paddingHorizontal: 19, paddingVertical: 22, borderRadius: 25, flexDirection: 'column', alignItems: 'stretch', gap: 7 },
@@ -344,14 +508,14 @@ const styles = StyleSheet.create({
   heroCopy: { flex: 1, alignItems: 'flex-end', gap: 11, zIndex: 2 },
   heroCopyCompact: { width: '100%' },
   eyebrow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 7, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
-  eyebrowText: { fontFamily: 'Vazirmatn', color: '#FFE9B4', fontSize: 10, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
-  title: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 37, lineHeight: 58, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl', letterSpacing: -.7 },
-  titleCompact: { fontSize: 28, lineHeight: 44 },
+  eyebrowText: { fontFamily: 'Vazirmatn-Bold', color: '#FFE9B4', fontSize: 12, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  title: { fontFamily: 'Vazirmatn-Bold', color: '#FFFFFF', fontSize: 39, lineHeight: 58, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl', letterSpacing: -.7 },
+  titleCompact: { fontSize: 30, lineHeight: 44 },
   titleAccent: { color: '#D8C4FF' },
-  description: { maxWidth: 480, alignSelf: 'flex-end', fontFamily: 'Vazirmatn', color: '#E1DAF7', fontSize: 12, lineHeight: 24, textAlign: 'right', writingDirection: 'rtl' },
+  description: { maxWidth: 480, alignSelf: 'flex-end', fontFamily: 'Vazirmatn-Bold', color: '#E1DAF7', fontSize: 14, lineHeight: 24, textAlign: 'right', writingDirection: 'rtl' },
   heroFacts: { flexDirection: 'row-reverse', flexWrap: 'wrap', alignItems: 'center', gap: 11, marginTop: 3 },
   fact: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
-  factText: { fontFamily: 'Vazirmatn', color: '#EEE9FF', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  factText: { fontFamily: 'Vazirmatn-Bold', color: '#EEE9FF', fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
   factDivider: { height: 13, width: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
   artStage: { position: 'relative', width: 300, height: 280, alignItems: 'center', justifyContent: 'center' },
   artStageCompact: { width: '100%', height: 226 },
@@ -368,15 +532,15 @@ const styles = StyleSheet.create({
   trailDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#E2C1FF' },
   trailDotMint: { backgroundColor: '#9FE5CD' },
   trailLine: { width: 24, height: 1, backgroundColor: 'rgba(226,193,255,0.65)' },
-  trailText: { fontFamily: 'Vazirmatn', color: '#D8D0F0', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  trailText: { fontFamily: 'Vazirmatn-Bold', color: '#D8D0F0', fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
   section: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 31, marginBottom: 17 },
   sectionHeading: { flex: 1, alignItems: 'flex-end', gap: 3 },
   sectionEyebrowRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 5 },
-  sectionEyebrow: { color: '#897BAA', fontSize: 8, fontWeight: '900', letterSpacing: 1.25, textAlign: 'right', writingDirection: 'ltr' },
-  sectionTitle: { fontFamily: 'Vazirmatn', color: ink, fontSize: 21, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
-  sectionSubtitle: { fontFamily: 'Vazirmatn', color: muted, fontSize: 10, textAlign: 'right', writingDirection: 'rtl' },
+  sectionEyebrow: { color: '#897BAA', fontSize: 10, fontWeight: '900', letterSpacing: 1.25, textAlign: 'right', writingDirection: 'ltr' },
+  sectionTitle: { fontFamily: 'Vazirmatn-Bold', color: ink, fontSize: 23, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  sectionSubtitle: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 12, textAlign: 'right', writingDirection: 'rtl' },
   sectionCount: { minHeight: 34, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, backgroundColor: '#F0ECF8' },
-  sectionCountText: { fontFamily: 'Vazirmatn', color: '#7A6A9B', fontSize: 9, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  sectionCountText: { fontFamily: 'Vazirmatn-Bold', color: '#7A6A9B', fontSize: 11, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
   cards: { flexDirection: 'row-reverse', gap: 19 },
   cardsCompact: { flexDirection: 'column', gap: 14 },
   card: { flex: 1, borderRadius: 24, borderWidth: 1, backgroundColor: '#FFFFFF', overflow: 'hidden', shadowColor: '#32284E', shadowOpacity: .06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 2 },
@@ -388,68 +552,136 @@ const styles = StyleSheet.create({
   coverGlow: { position: 'absolute', right: -45, bottom: -100, width: 220, height: 220, borderRadius: 110, opacity: .14 },
   cardTop: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 },
   languageIcon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', shadowColor: '#1A1730', shadowOpacity: .17, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
-  code: { fontSize: 12, fontWeight: '900', letterSpacing: 1, textAlign: 'right', writingDirection: 'ltr' },
+  code: { fontSize: 14, fontWeight: '900', letterSpacing: 1, textAlign: 'right', writingDirection: 'ltr' },
   available: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  availableText: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 9, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  availableText: { fontFamily: 'Vazirmatn-Bold', color: '#FFFFFF', fontSize: 11, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
   smallDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#D5F6C7' },
   cardGreetingRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, zIndex: 1 },
   greetingOrb: { width: 40, height: 40, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.17)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
   greetingWrap: { alignItems: 'flex-end', gap: 2 },
-  greeting: { color: '#FFFFFF', fontSize: 31, fontWeight: '800', letterSpacing: -.8, textAlign: 'right', writingDirection: 'ltr' },
-  greetingCaption: { fontFamily: 'Vazirmatn', color: 'rgba(255,255,255,0.82)', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  greeting: { color: '#FFFFFF', fontSize: 33, fontWeight: '800', letterSpacing: -.8, textAlign: 'right', writingDirection: 'ltr' },
+  greetingCaption: { fontFamily: 'Vazirmatn-Bold', color: 'rgba(255,255,255,0.82)', fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
   coverSparkle: { position: 'absolute', left: 24, top: 72, opacity: .88 },
   cardBody: { padding: 20, paddingTop: 17, gap: 12 },
   cardBodyCompact: { padding: 17, gap: 10 },
   cardIdentity: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 9 },
   languageIdentity: { alignItems: 'flex-end' },
-  languageName: { fontFamily: 'Vazirmatn', color: ink, fontSize: 25, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
-  nativeName: { fontSize: 11, fontWeight: '700', letterSpacing: .3, textAlign: 'right', writingDirection: 'ltr' },
+  languageName: { fontFamily: 'Vazirmatn-Bold', color: ink, fontSize: 27, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  nativeName: { fontSize: 13, fontWeight: '700', letterSpacing: .3, textAlign: 'right', writingDirection: 'ltr' },
   cardBadge: { paddingHorizontal: 9, paddingVertical: 6, borderRadius: 11 },
-  cardBadgeText: { fontFamily: 'Vazirmatn', fontSize: 8, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
-  cardDescription: { fontFamily: 'Vazirmatn', color: muted, fontSize: 11, lineHeight: 22, textAlign: 'right', writingDirection: 'rtl' },
+  cardBadgeText: { fontFamily: 'Vazirmatn-Bold', fontSize: 10, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  cardDescription: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 13, lineHeight: 22, textAlign: 'right', writingDirection: 'rtl' },
   meta: { flexDirection: 'row-reverse', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   metaItem: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4 },
-  metaText: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  metaText: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
   metaDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: '#C8C2D2' },
   enter: { minHeight: 47, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 13, paddingVertical: 8, borderRadius: 14, marginTop: 1 },
-  enterText: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 11, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  enterText: { fontFamily: 'Vazirmatn-Bold', color: '#FFFFFF', fontSize: 13, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
   enterIcon: { width: 29, height: 29, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.18)' },
   reassurance: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, marginTop: 20, padding: 15, borderRadius: 18, backgroundColor: '#EEF4E9', borderWidth: 1, borderColor: '#E0EBD9' },
   reassuranceCompact: { alignItems: 'flex-start' },
   shield: { width: 39, height: 39, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   reassuranceCopy: { flex: 1, gap: 2 },
-  reassuranceTitle: { fontFamily: 'Vazirmatn', color: '#516A45', fontSize: 10, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
-  reassuranceText: { fontFamily: 'Vazirmatn', color: '#718168', fontSize: 9, lineHeight: 19, textAlign: 'right', writingDirection: 'rtl' },
+  reassuranceTitle: { fontFamily: 'Vazirmatn-Bold', color: '#516A45', fontSize: 12, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  reassuranceText: { fontFamily: 'Vazirmatn-Bold', color: '#718168', fontSize: 11, lineHeight: 19, textAlign: 'right', writingDirection: 'rtl' },
   syncCard: { minHeight: 75, flexDirection: 'row-reverse', alignItems: 'center', gap: 12, paddingHorizontal: 15, paddingVertical: 13, borderRadius: 18, backgroundColor: '#F2F0FC', borderWidth: 1, borderColor: '#DFD9F4' },
   syncCardPressed: { opacity: .8, transform: [{ scale: .99 }] },
   syncIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#6554B4' },
   syncCopy: { flex: 1, alignItems: 'flex-end', gap: 3 },
-  syncTitle: { fontFamily: 'Vazirmatn', color: '#43387D', fontSize: 11, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
-  syncText: { fontFamily: 'Vazirmatn', color: '#706A8E', fontSize: 9, lineHeight: 17, textAlign: 'right', writingDirection: 'rtl' },
+  syncTitle: { fontFamily: 'Vazirmatn-Bold', color: '#43387D', fontSize: 13, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  syncText: { fontFamily: 'Vazirmatn-Bold', color: '#706A8E', fontSize: 11, lineHeight: 17, textAlign: 'right', writingDirection: 'rtl' },
   note: { borderTopWidth: 1, borderTopColor: '#E7E1ED', marginTop: 11 },
   noteToggle: { minHeight: 66, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 15 },
   noteLabel: { flex: 1, flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
   noteCopy: { flex: 1, gap: 2 },
-  noteTitle: { fontFamily: 'Vazirmatn', color: '#5C536A', fontSize: 11, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
-  noteCaption: { fontFamily: 'Vazirmatn', color: '#8B8397', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  noteTitle: { fontFamily: 'Vazirmatn-Bold', color: '#5C536A', fontSize: 13, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  noteCaption: { fontFamily: 'Vazirmatn-Bold', color: '#8B8397', fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
   noteDetails: { gap: 10, paddingBottom: 12 },
   courseDetailsCard: { padding: 14, borderRadius: 16, borderWidth: 1 },
   englishDetailsCard: { backgroundColor: '#F3EFFC', borderColor: '#E3DAF7' },
   germanDetailsCard: { backgroundColor: '#EEF6F0', borderColor: '#DDEBDD' },
   courseDetailsHeader: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 5 },
-  courseDetailsTitle: { fontFamily: 'Vazirmatn', color: ink, fontSize: 11, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
-  courseDetailsTotal: { fontFamily: 'Vazirmatn', color: '#695C84', fontSize: 9, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
-  courseDetailsIntro: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, textAlign: 'right', writingDirection: 'rtl', marginTop: 7 },
+  courseDetailsTitle: { fontFamily: 'Vazirmatn-Bold', color: ink, fontSize: 13, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  courseDetailsTotal: { fontFamily: 'Vazirmatn-Bold', color: '#695C84', fontSize: 11, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  courseDetailsIntro: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 11, textAlign: 'right', writingDirection: 'rtl', marginTop: 7 },
   levelSummaryList: { marginTop: 5 },
   levelSummaryRow: { minHeight: 29, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4, paddingVertical: 5, borderTopWidth: 1, borderTopColor: 'rgba(110,100,130,0.11)' },
-  levelSummaryName: { flexShrink: 0, fontFamily: 'Vazirmatn', color: '#50475F', fontSize: 9, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
-  levelSummaryStats: { flexShrink: 1, fontFamily: 'Vazirmatn', color: muted, fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  levelSummaryName: { flexShrink: 0, fontFamily: 'Vazirmatn-Bold', color: '#50475F', fontSize: 11, fontWeight: '700', textAlign: 'right', writingDirection: 'rtl' },
+  levelSummaryStats: { flexShrink: 1, fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
   placementButton: { minHeight: 43, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 12, marginTop: 10, borderRadius: 12 },
   placementEnglish: { backgroundColor: '#7558D8' },
   placementGerman: { backgroundColor: '#198373' },
-  placementButtonText: { fontFamily: 'Vazirmatn', color: '#FFFFFF', fontSize: 10, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
-  noteFootnote: { fontFamily: 'Vazirmatn', color: muted, fontSize: 9, lineHeight: 18, textAlign: 'right', writingDirection: 'rtl', paddingHorizontal: 4 },
+  placementButtonText: { fontFamily: 'Vazirmatn-Bold', color: '#FFFFFF', fontSize: 12, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  noteFootnote: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 11, lineHeight: 18, textAlign: 'right', writingDirection: 'rtl', paddingHorizontal: 4 },
   footer: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, paddingBottom: 16 },
   footerLine: { width: 24, height: 1, backgroundColor: '#D3CBDD' },
-  footerText: { fontFamily: 'Vazirmatn', color: '#9990A7', fontSize: 9, textAlign: 'right', writingDirection: 'rtl' },
+  footerText: { fontFamily: 'Vazirmatn-Bold', color: '#9990A7', fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
+  // --- New: StatsStrip + Benefits + Extended Footer (1+2+3) to fill 360x800 without white gap ---
+  statsStrip: { flexDirection: 'row-reverse', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 18, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECE7F3', shadowColor: '#32284E', shadowOpacity: .04, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
+  statsStripCompact: { gap: 6, paddingHorizontal: 8 },
+  statPill: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  statValue: { fontFamily: 'Vazirmatn-Bold', color: ink, fontSize: 13, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  statLabel: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
+  statDivider: { width: 1, height: 12, backgroundColor: '#E9E2F3', marginHorizontal: 4 },
+  benefitsSection: { marginTop: 20, gap: 12 },
+  benefitsHeader: { alignItems: 'flex-end', gap: 4 },
+  benefitsEyebrowRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 5 },
+  benefitsEyebrow: { color: '#897BAA', fontSize: 10, fontWeight: '900', letterSpacing: 1.25, textAlign: 'right', writingDirection: 'ltr' },
+  benefitsTitle: { fontFamily: 'Vazirmatn-Bold', color: ink, fontSize: 20, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  benefitsSubtitle: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 12, textAlign: 'right', writingDirection: 'rtl' },
+  benefitsGrid: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 12 },
+  benefitsGridCompact: { flexDirection: 'column', gap: 10 },
+  benefitCard: { flexBasis: '48%', flexGrow: 1, flexShrink: 1, minWidth: 140, flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10, padding: 14, borderRadius: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECE7F3', shadowColor: '#32284E', shadowOpacity: .05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
+  benefitCardCompact: { flexBasis: 'auto', width: '100%', minWidth: 0 },
+  benefitIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  benefitCopy: { flex: 1, gap: 3, alignItems: 'flex-end' },
+  benefitTitle: { fontFamily: 'Vazirmatn-Bold', color: ink, fontSize: 13, fontWeight: '800', textAlign: 'right', writingDirection: 'rtl' },
+  benefitDesc: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 11, lineHeight: 16, textAlign: 'right', writingDirection: 'rtl' },
+  fantasyCard: { marginTop: 22, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#514382', padding: 18, minHeight: 420, shadowColor: '#231752', shadowOpacity: .18, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 6, position: 'relative' },
+  fantasyCardCompact: { padding: 16, minHeight: 0, borderRadius: 22 },
+  fantasyGlowA: { position: 'absolute', top: -80, right: -40, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255, 235, 169, 0.12)' },
+  fantasyGlowB: { position: 'absolute', bottom: -90, left: -50, width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(78, 213, 189, 0.13)' },
+  fantasyStarsTop: { position: 'absolute', top: 14, right: 18, opacity: 0.9 },
+  fantasyStarsBottom: { position: 'absolute', bottom: 14, left: 18, opacity: 0.8 },
+  fantasyInner: { flexDirection: 'row-reverse', alignItems: 'center', gap: 18, zIndex: 2 },
+  fantasyInnerCompact: { flexDirection: 'column', alignItems: 'stretch', gap: 14 },
+  fantasyArtWrap: { position: 'relative', width: 220, height: 280, alignItems: 'center', justifyContent: 'center' },
+  fantasyArtWrapCompact: { width: '100%', height: 260 },
+  fantasyOrbit: { position: 'absolute', width: 195, height: 195, borderRadius: 97, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', backgroundColor: 'rgba(255,255,255,0.04)' },
+  fantasyImage: { width: 195, height: 240, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
+  fantasyImageCompact: { width: 200, height: 240, borderRadius: 20 },
+  fantasyBookBadge: { position: 'absolute', bottom: 6, right: 12, flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
+  fantasyBookText: { fontFamily: 'Vazirmatn-Bold', color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+  fantasyCopy: { flex: 1, gap: 10, alignItems: 'flex-end' },
+  fantasyCopyCompact: { gap: 8 },
+  fantasyEyebrow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.11)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
+  fantasyEyebrowText: { fontFamily: 'Vazirmatn-Bold', color: '#FFE9B4', fontSize: 11, fontWeight: '700' },
+  fantasyEyebrowDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#9FE5CD' },
+  fantasyTitle: { fontFamily: 'Vazirmatn-Bold', color: '#FFFFFF', fontSize: 28, lineHeight: 38, fontWeight: '900', textAlign: 'right', writingDirection: 'rtl' },
+  fantasyTitleCompact: { fontSize: 24, lineHeight: 34 },
+  fantasyTitleAccent: { color: '#FFEBA9' },
+  fantasyDesc: { fontFamily: 'Vazirmatn-Bold', color: '#E1DAF7', fontSize: 13, lineHeight: 21, textAlign: 'right', writingDirection: 'rtl' },
+  fantasyPoints: { gap: 6, alignItems: 'flex-end', marginTop: 2 },
+  fantasyPoint: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  fantasyPointDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFEBA9' },
+  fantasyPointText: { fontFamily: 'Vazirmatn-Bold', color: '#EEE9FF', fontSize: 11, textAlign: 'right', writingDirection: 'rtl' },
+  fantasyCTA: { marginTop: 4, minHeight: 44, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, borderRadius: 14, backgroundColor: '#FFFFFF', shadowColor: '#1A1730', shadowOpacity: .12, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  fantasyCTAText: { fontFamily: 'Vazirmatn-Bold', color: '#5E42C5', fontSize: 14, fontWeight: '800' },
+  fantasyCTAIcon: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0EAFE' },
+  fantasyFootnote: { fontFamily: 'Vazirmatn-Bold', color: 'rgba(225,218,247,0.8)', fontSize: 10, textAlign: 'right', writingDirection: 'rtl', marginTop: 2 },
+  footerExtended: { marginTop: 22, paddingTop: 16, paddingBottom: 8, borderTopWidth: 1, borderTopColor: '#E7E1ED', gap: 12, backgroundColor: 'transparent' },
+  footerTop: { gap: 12 },
+  footerBrandRow: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  footerBrandLeft: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  footerLogoMini: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  footerBrandText: { color: ink, fontSize: 15, fontWeight: '800', textAlign: 'right', writingDirection: 'ltr' },
+  footerVersion: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 11, textAlign: 'right', writingDirection: 'rtl', marginTop: 1 },
+  footerBadge: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECE7F3' },
+  footerBadgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#81A869' },
+  footerBadgeText: { fontFamily: 'Vazirmatn-Bold', color: '#695C84', fontSize: 11, fontWeight: '600', textAlign: 'right', writingDirection: 'rtl' },
+  footerLinks: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' },
+  footerLink: { fontFamily: 'Vazirmatn-Bold', color: muted, fontSize: 12, textAlign: 'right', writingDirection: 'rtl' },
+  footerLinkDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: '#D3CBDD' },
+  footerBottom: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 4 },
+
 });

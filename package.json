@@ -5,7 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 node scripts/run-expo.mjs start",
+    "dev:web": "PORT=8081 node scripts/serve-preview.mjs",
     "build:web": "node scripts/run-expo.mjs export --platform web --clear",
+    "serve:web": "PORT=8081 node scripts/serve-preview.mjs",
+    "preview:web": "PORT=8081 node scripts/serve-preview.mjs",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "validate:content": "node scripts/validate-course-content.mjs",

@@ -31,10 +31,10 @@ export function RussianBottomNav() {
 }
 
 const styles = StyleSheet.create({
-  shell: { minHeight: 68, marginHorizontal: 14, marginBottom: 8, paddingTop: 7, paddingBottom: 9, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', backgroundColor: Palette.surface, borderWidth: 1, borderColor: Palette.border, borderRadius: 22, shadowColor: '#1D2345', shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 5 },
+  shell: { minHeight: 68, marginHorizontal: 14, marginBottom: 38, paddingTop: 7, paddingBottom: 9, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', backgroundColor: Palette.surface, borderWidth: 1, borderColor: Palette.border, borderRadius: 22, shadowColor: '#1D2345', shadowOpacity: 0.1, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 5 },
   item: { flex: 1, minWidth: 76, alignItems: 'center', gap: 2 },
   iconWrap: { width: 42, height: 32, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },
   iconWrapActive: { backgroundColor: Palette.primarySoft },
-  label: { fontFamily: Typography.fontFamily, fontSize: 10, color: Palette.muted },
+  label: { fontFamily: Typography.fontFamily, fontSize: 12, color: Palette.muted },
   labelActive: { color: Palette.primaryDark, fontWeight: Typography.weights.bold },
 });
